@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- 注意：这里没有 user-scalable=no，用户可以自由缩放页面 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0e7490">
+<meta name="description" content="关于艾宾浩斯复习日程：做它的原因、背后的遗忘曲线，以及对复习安排和记忆保持率的说明。">
+<title>关于 - 艾宾浩斯复习日程</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>🧠</text></svg>">
+<!-- 全站共用样式 -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- 导航栏：每个页面都是同一段，当前页用 aria-current="page" 标出来（样式在 style.css） -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">🧠 <span>艾宾浩斯复习日程</span></a>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="index.html">首页</a>
+      <a href="app/index.html">开始复习</a>
+      <a href="guide.html">使用指南</a>
+      <a href="privacy.html">隐私说明</a>
+      <a href="about.html" aria-current="page">关于</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+<h1 class="page-title">关于</h1>
+<p class="page-lead">一个免费、免注册的小工具，帮你把“什么时候该复习什么”交给日历来记。</p>
+
+<h2>为什么做它</h2>
+<p>学过的东西容易忘，复习又很容易拖。这个网站想解决的只有一件事：你把当天学的内容写下来，它就替你算好之后每一次复习的日期，打开就知道今天该做什么。</p>
+
+<h2>艾宾浩斯遗忘曲线</h2>
+<p>赫尔曼·艾宾浩斯（Hermann Ebbinghaus）是德国心理学家，1885 年发表了关于记忆的实验研究。他发现刚学完的内容遗忘得最快，之后逐渐放缓，而在合适的时间点复习，能让记忆保持得更久。这条“先快后慢”的曲线就是遗忘曲线，也是“间隔复习”方法的由来。</p>
+
+<h2>需要说明的两件事</h2>
+<div class="note">
+  <p><strong>1. 复习间隔不是艾宾浩斯规定的。</strong>本站使用的 1、2、4、7、15、30 天，是一种常见的经验性安排，目的是让复习越来越稀疏。它不是艾宾浩斯原始实验里给出的数字，也不保证对每个人、每类内容都最优，你可以把它当作一个好用的起点。</p>
+  <p><strong>2. “记忆保持率”只是示意。</strong>应用里显示的百分比，是用公式 e<sup>−0.3×天数</sup> 算出来的（最低显示 20%），用来直观地表示“隔得越久越容易忘”，并不是对你个人记忆的测量。</p>
+</div>
+
+<h2>技术与开源</h2>
+<p>网站由纯 HTML、CSS 和 JavaScript 写成，没有后端，托管在 GitHub Pages。源码公开在 <a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub</a>，欢迎提意见。数据如何存放，请看<a href="privacy.html">隐私说明</a>。</p>
+
+<p style="margin-top:24px"><a class="btn" href="app/index.html">打开应用 →</a></p>
+</main>
+
+<footer class="site-footer">
+  <p><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></p>
+  <p>© 2026 sleepgenius07 · <a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
+</footer>
+</body>
+</html>

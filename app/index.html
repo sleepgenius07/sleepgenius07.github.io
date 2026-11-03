@@ -2,185 +2,35 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- 改动：去掉了 maximum-scale=1.0 和 user-scalable=no，这样用户可以双指缩放页面（对视力不好的人很重要） -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="复习日程">
-<meta name="theme-color" content="#6366f1">
+<meta name="theme-color" content="#0e7490">
 <meta name="description" content="艾宾浩斯遗忘曲线复习提示工具">
 <title>艾宾浩斯复习日程</title>
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi6Im+5a6+5rW35aS05aSN5Lmg5pel56iLIiwic2hvcnRfbmFtZSI6IuWkjeS5oOaXpeeoiyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZjhmYWZjIiwidGhlbWVfY29sb3IiOiIjNjM2NmYxIiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnPjx0ZXh0IHk9Jy45ZW0nIGZvbnQtc2l6ZT0nODAnPvCfp6A8L3RleHQ+PC9zdmc+Iiwic2l6ZXMiOiJhbnkiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi6Im+5a6+5rW35aS05aSN5Lmg5pel56iLIiwic2hvcnRfbmFtZSI6IuWkjeS5oOaXpeeoiyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZjBmOWZmIiwidGhlbWVfY29sb3IiOiIjMGU3NDkwIiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnPjx0ZXh0IHk9Jy45ZW0nIGZvbnQtc2l6ZT0nODAnPvCfp6A8L3RleHQ+PC9zdmc+Iiwic2l6ZXMiOiJhbnkiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>🧠</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
-body{font-family:'Noto Sans SC',system-ui,sans-serif;background:linear-gradient(160deg,#f8fafc 0%,#eef2ff 50%,#faf5ff 100%);color:#1e293b}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(120,120,140,0.2);border-radius:2px}
-
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-@keyframes modalIn{from{opacity:0;transform:scale(0.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes overlayIn{from{opacity:0}to{opacity:1}}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
-
-/* Header */
-.header{background:rgba(255,255,255,0.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(99,102,241,0.08);padding:12px 16px;flex-shrink:0;z-index:10}
-.header-inner{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto}
-.logo{display:flex;align-items:center;gap:6px}
-.logo h1{font-size:18px;font-weight:700;color:#1e293b}
-.logo p{font-size:10px;color:#94a3b8;letter-spacing:2px}
-.header-btns{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.hbtn{padding:4px 10px;border-radius:7px;border:1px solid rgba(99,102,241,0.18);background:rgba(99,102,241,0.05);color:#6366f1;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap}
-.hbtn.warn{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.18);color:#b45309}
-.hbtn.danger{background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.12);color:#dc2626}
-.streak-badge{display:flex;align-items:center;gap:3px;padding:3px 10px;border-radius:7px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);font-size:12px;font-weight:600;color:#92400e}
-.streak-fire{animation:pulse 1.5s ease infinite;display:inline-block}
-
-/* Today banner */
-.today-banner{padding:8px 12px;background:rgba(251,191,36,0.08);border:1px solid rgba(245,158,11,0.12);border-radius:10px;font-size:12px;color:#92400e;margin:8px 16px 0;display:flex;justify-content:space-between;align-items:center}
-
-/* Main content */
-.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.main-grid{display:grid;grid-template-columns:380px 1fr;gap:20px;max-width:1200px;margin:0 auto;padding:16px}
-
-/* Calendar */
-.cal-card{background:rgba(255,255,255,0.9);border-radius:16px;padding:16px;border:1px solid rgba(99,102,241,0.06);box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:12px}
-.cal-nav{display:flex;align-items:center;gap:6px;margin-bottom:12px}
-.cal-nav button{width:30px;height:30px;border-radius:7px;border:1px solid #e2e8f0;background:#fff;font-size:16px;cursor:pointer;color:#64748b;display:flex;align-items:center;justify-content:center;font-family:inherit}
-.cal-title{flex:1;text-align:center}
-.cal-title .year{font-size:10px;color:#94a3b8;letter-spacing:1px;display:block}
-.cal-title .month{font-size:17px;font-weight:700;color:#1e293b}
-.cal-today-btn{padding:3px 10px;border-radius:6px;border:1px solid rgba(99,102,241,0.2);background:rgba(99,102,241,0.06);color:#6366f1;font-size:11px;cursor:pointer;font-weight:500;font-family:inherit}
-.week-row{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px}
-.week-label{text-align:center;font-size:11px;color:#94a3b8;font-weight:500;padding:3px 0}
-.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.day-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;border-radius:10px;cursor:pointer;position:relative;transition:all 0.12s ease;border:2px solid transparent;-webkit-user-select:none;user-select:none}
-.day-cell:active{transform:scale(0.92)}
-.day-cell.selected{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:700}
-.day-cell.today{background:rgba(99,102,241,0.08);border-color:#6366f1;font-weight:700}
-.day-cell.outside{opacity:0.22}
-.dot-row{display:flex;gap:3px;margin-top:1px;height:5px}
-.dot{width:4px;height:4px;border-radius:50%}
-.legend{display:flex;gap:12px;justify-content:center;margin-top:10px;font-size:10px;color:#94a3b8}
-.legend-item{display:flex;align-items:center;gap:3px}
-
-/* Curve card */
-.curve-card{background:rgba(255,255,255,0.9);border-radius:14px;padding:14px;border:1px solid rgba(99,102,241,0.06);box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.curve-card h3{font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px}
-.curve-card p{font-size:10px;color:#94a3b8;margin-bottom:6px}
-
-/* Detail section */
-.detail-section{display:flex;flex-direction:column;gap:12px}
-.date-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.date-header h2{font-size:18px;font-weight:700;color:#1e293b}
-.date-weekday{font-size:13px;font-weight:400;color:#94a3b8}
-.today-tag{padding:2px 8px;border-radius:16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:10px;font-weight:600}
-
-/* Input card */
-.input-card{background:rgba(255,255,255,0.9);border-radius:14px;padding:14px;border:1px solid rgba(99,102,241,0.06);box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.input-header{display:flex;align-items:center;gap:5px;margin-bottom:8px;font-size:13px}
-.input-header .hint{margin-left:auto;font-size:11px;color:#94a3b8}
-.input-card textarea{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #e2e8f0;font-size:14px;line-height:1.7;resize:vertical;font-family:inherit;color:#334155;background:rgba(248,250,252,0.6);transition:all 0.2s;min-height:80px}
-.input-card textarea:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.12)}
-.add-btn{margin-top:8px;width:100%;padding:10px 0;border-radius:10px;border:none;background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s}
-.add-btn:disabled{opacity:0.45;cursor:not-allowed}
-.add-btn:active:not(:disabled){transform:scale(0.98)}
-
-/* Section cards */
-.section-card{background:rgba(255,255,255,0.9);border-radius:14px;padding:14px;border:1px solid rgba(99,102,241,0.06);box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.section-title{font-size:13px;font-weight:600;color:#1e293b;display:flex;align-items:center;gap:6px;margin-bottom:10px}
-.section-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
-.done-count{margin-left:auto;font-size:11px;font-weight:400;color:#94a3b8}
-.learn-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:7px;margin-bottom:4px;background:rgba(99,102,241,0.03);border:1px solid rgba(99,102,241,0.06);animation:fadeUp 0.3s ease both;font-size:13px;color:#334155}
-.del-btn{width:22px;height:22px;border-radius:5px;border:none;background:rgba(239,68,68,0.08);color:#ef4444;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.schedule-preview{margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(99,102,241,0.03);border:1px solid rgba(99,102,241,0.06)}
-.schedule-preview .label{font-size:11px;color:#64748b;margin-bottom:5px}
-.schedule-tags{display:flex;flex-wrap:wrap;gap:5px}
-.schedule-tag{padding:3px 8px;border-radius:5px;font-size:10px;font-weight:500;border:1px solid;cursor:pointer;transition:all 0.12s}
-.schedule-tag:active{transform:scale(0.95)}
-
-/* Review items */
-.review-group{margin-bottom:10px}
-.review-group-head{display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;margin-bottom:5px;flex-wrap:wrap}
-.review-round{padding:1px 7px;border-radius:4px;background:rgba(99,102,241,0.08);color:#6366f1;font-size:10px;font-weight:500}
-.retention-bar{flex:1;height:3px;border-radius:2px;background:#f1f5f9;overflow:hidden;max-width:60px;min-width:30px}
-.retention-fill{height:100%;border-radius:2px;transition:width 0.3s}
-.retention-text{font-size:10px;color:#94a3b8}
-.review-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;margin-bottom:3px;border:1px solid;animation:fadeUp 0.3s ease both}
-.check-box{width:20px;height:20px;border-radius:5px;border:2px solid;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.12s}
-.check-box:active{transform:scale(0.88)}
-.review-text{font-size:13px;color:#334155}
-
-/* Empty */
-.empty-state{text-align:center;padding:32px 16px;background:rgba(255,255,255,0.6);border-radius:14px}
-.empty-state .icon{font-size:36px;margin-bottom:10px}
-.empty-state .text{font-size:14px;color:#64748b;font-weight:500}
-.empty-state .hint{font-size:11px;color:#94a3b8;margin-top:5px}
-
-/* Ref card */
-.ref-card{background:rgba(255,255,255,0.7);border-radius:12px;padding:12px;border:1px solid rgba(99,102,241,0.06)}
-.ref-card h4{font-size:12px;font-weight:600;color:#64748b;margin-bottom:8px}
-.ref-grid{display:flex;gap:6px;justify-content:space-between}
-.ref-item{text-align:center;flex:1}
-.ref-num{font-size:18px;font-weight:700;color:#6366f1}
-.ref-label{font-size:9px;color:#94a3b8}
-.ref-round{font-size:9px;color:#a5b4fc;margin-top:1px}
-
-/* Stats */
-.stats-panel{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 16px 0;animation:fadeUp 0.3s ease}
-.stat-card{background:rgba(99,102,241,0.04);border-radius:10px;padding:10px;text-align:center;border:1px solid rgba(99,102,241,0.08)}
-.stat-num{font-size:22px;font-weight:700;color:#6366f1}
-.stat-label{font-size:10px;color:#94a3b8;margin-top:1px}
-
-/* Modal */
-.modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(15,23,42,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px;animation:overlayIn 0.25s ease}
-.modal{background:#fff;border-radius:18px;padding:20px;width:100%;max-width:440px;max-height:82vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.2);animation:modalIn 0.35s cubic-bezier(0.16,1,0.3,1)}
-.modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
-.modal-header h2{font-size:18px;font-weight:700;color:#1e293b}
-.modal-header .date{font-size:12px;color:#94a3b8;margin-top:2px}
-.modal-close{width:30px;height:30px;border-radius:7px;border:1px solid #e2e8f0;background:#fff;font-size:15px;cursor:pointer;color:#94a3b8;display:flex;align-items:center;justify-content:center;font-family:inherit}
-.modal .streak-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(251,191,36,0.06));border:1px solid rgba(245,158,11,0.12);margin-bottom:12px;font-size:13px;color:#92400e}
-.modal .streak-bar .msg{margin-left:auto;font-size:11px;color:#b45309;font-weight:500}
-.modal-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.modal-summary .card{text-align:center;padding:10px 6px;border-radius:10px;background:rgba(248,250,252,0.8);border:1px solid}
-.modal-summary .num{font-size:22px;font-weight:700}
-.modal-summary .lbl{font-size:10px;color:#94a3b8;margin-top:1px}
-.modal-list{margin-bottom:12px}
-.modal-list h4{font-size:12px;font-weight:600;color:#1e293b;margin-bottom:6px}
-.modal-list-scroll{max-height:180px;overflow-y:auto}
-.modal-group{margin-bottom:8px}
-.modal-group-head{display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;margin-bottom:4px}
-.modal-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;margin-bottom:2px;animation:fadeUp 0.3s ease both}
-.modal-overdue{padding:10px 12px;border-radius:10px;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.1);margin-bottom:12px}
-.modal-overdue h4{font-size:12px;font-weight:600;color:#dc2626;margin-bottom:3px}
-.modal-overdue .hint{font-size:10px;color:#f87171;margin-bottom:6px}
-.modal-overdue-item{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:5px;margin-bottom:2px;background:rgba(239,68,68,0.04);font-size:12px;color:#991b1b}
-.modal-overdue-item .meta{font-size:10px;color:#f87171;flex-shrink:0}
-.modal-start-btn{width:100%;padding:11px 0;border-radius:10px;border:none;background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
-.modal-start-btn:active{transform:scale(0.98)}
-
-/* Mobile responsive */
-@media(max-width:800px){
-  .main-grid{grid-template-columns:1fr;padding:12px}
-  .header{padding:10px 12px}
-  .logo h1{font-size:16px}
-  .stats-panel{grid-template-columns:repeat(2,1fr);margin:8px 12px 0}
-  .today-banner{margin:6px 12px 0}
-  .cal-section{order:0}
-  .detail-section{order:1}
-}
-@media(max-width:400px){
-  .header-btns{gap:4px}
-  .hbtn{padding:3px 7px;font-size:11px}
-  .stats-panel{grid-template-columns:repeat(2,1fr)}
-}
-</style>
+<!-- 改动：先加载共用样式（../ 表示上一级目录），再加载应用专用样式 app.css -->
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="app.css">
 </head>
-<body>
+<!-- 改动：body 加了 app-page，让应用页面固定为一屏高、内容区自己滚动 -->
+<body class="app-page">
+<!-- 改动：顶部加入全站共用的导航栏（和其他页面是同一段代码，当前页用 aria-current 标记） -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../index.html">🧠 <span>艾宾浩斯复习日程</span></a>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="../index.html">首页</a>
+      <a href="index.html" aria-current="page">开始复习</a>
+      <a href="../guide.html">使用指南</a>
+      <a href="../privacy.html">隐私说明</a>
+      <a href="../about.html">关于</a>
+    </nav>
+  </div>
+</header>
 <div class="app" id="app"></div>
 <script>
 // ========== DATA LAYER ==========
@@ -358,8 +208,8 @@ function render(){
       ):null,
       // Summary
       h('div',{className:'modal-summary'},
-        h('div',{className:'card',style:{borderColor:'rgba(99,102,241,0.15)'}},
-          h('div',{className:'num',style:{color:'#6366f1'}},todayRevs.length),
+        h('div',{className:'card',style:{borderColor:'rgba(14,116,144,0.15)'}},
+          h('div',{className:'num',style:{color:'#0e7490'}},todayRevs.length),
           h('div',{className:'lbl'},'今日待复习')
         ),
         h('div',{className:'card',style:{borderColor:'rgba(16,185,129,0.15)'}},
@@ -389,7 +239,7 @@ function render(){
                   const done=isCompleted(todayKey,r.content,r.learnedOn);
                   return h('div',{className:'modal-item',style:{background:done?'rgba(16,185,129,0.05)':'rgba(251,191,36,0.05)'}},
                     h('div',{className:'check-box',onclick:()=>toggleCompleted(todayKey,r.content,r.learnedOn),style:{background:done?'#10b981':'transparent',borderColor:done?'#10b981':'#cbd5e1',color:'#fff'}},done?'✓':''),
-                    h('span',{style:{fontSize:'13px',color:'#334155',flex:'1',textDecoration:done?'line-through':'none',opacity:done?'0.5':'1'}},r.content)
+                    h('span',{style:{fontSize:'14px',color:'#334155',flex:'1',textDecoration:done?'line-through':'none',opacity:done?'0.5':'1'}},r.content)
                   );
                 })
               );
@@ -408,7 +258,7 @@ function render(){
               h('span',{className:'meta'},'原定 '+(keyToDate(r.dueDate).getMonth()+1)+'/'+keyToDate(r.dueDate).getDate())
             )
           ),
-          overdue.length>10?h('p',{style:{fontSize:'11px',color:'#94a3b8',textAlign:'center',marginTop:'5px'}},'还有 '+(overdue.length-10)+' 项...'):null
+          overdue.length>10?h('p',{style:{fontSize:'13px',color:'#64748b',textAlign:'center',marginTop:'5px'}},'还有 '+(overdue.length-10)+' 项...'):null
         )
       ):null,
       // Button
@@ -490,7 +340,7 @@ function render(){
     const cell=h('div',{className:cls,onclick:()=>{state.selectedDate=day.date;render();}},
       h('span',null,day.date.getDate()),
       h('div',{className:'dot-row'},
-        hasL?h('div',{className:'dot',style:{background:isSel?'rgba(255,255,255,0.9)':'#6366f1'}}):null,
+        hasL?h('div',{className:'dot',style:{background:isSel?'rgba(255,255,255,0.9)':'#0e7490'}}):null,
         hasR?h('div',{className:'dot',style:{background:isSel?'rgba(255,255,255,0.7)':allDone?'#10b981':isPast?'#ef4444':'#f59e0b'}}):null
       )
     );
@@ -499,7 +349,7 @@ function render(){
   calCard.appendChild(daysGrid);
 
   const legend=h('div',{className:'legend'},
-    h('div',{className:'legend-item'},h('div',{className:'dot',style:{background:'#6366f1'}}),' 已学'),
+    h('div',{className:'legend-item'},h('div',{className:'dot',style:{background:'#0e7490'}}),' 已学'),
     h('div',{className:'legend-item'},h('div',{className:'dot',style:{background:'#f59e0b'}}),' 待复习'),
     h('div',{className:'legend-item'},h('div',{className:'dot',style:{background:'#10b981'}}),' 已完成'),
     h('div',{className:'legend-item'},h('div',{className:'dot',style:{background:'#ef4444'}}),' 逾期')
@@ -509,7 +359,7 @@ function render(){
 
   // Curve
   const curveCard=h('div',{className:'curve-card'});
-  curveCard.innerHTML='<h3>🔬 记忆保持率</h3><p>每次复习都会强化记忆连接</p><svg viewBox="0 0 300 100" style="width:100%;height:70px"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/><stop offset="100%" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs><line x1="30" y1="85" x2="290" y2="85" stroke="#e2e8f0" stroke-width="1"/><line x1="30" y1="10" x2="30" y2="85" stroke="#e2e8f0" stroke-width="1"/><path d="M30,15 Q80,20 120,55 Q160,75 290,80" fill="none" stroke="#fca5a5" stroke-width="2" stroke-dasharray="4,4"/><path d="M30,15 L60,30 L60,18 L90,33 L90,16 L150,35 L150,14 L210,28 L210,13 L290,22" fill="none" stroke="#6366f1" stroke-width="2.5"/><path d="M30,15 L60,30 L60,18 L90,33 L90,16 L150,35 L150,14 L210,28 L210,13 L290,22 L290,85 L30,85 Z" fill="url(#cg)"/><text x="160" y="97" text-anchor="middle" font-size="8" fill="#94a3b8">时间 →</text><text x="155" y="72" font-size="7" fill="#fca5a5">不复习</text><text x="248" y="18" font-size="7" fill="#6366f1">定期复习</text></svg>';
+  curveCard.innerHTML='<h3>🔬 记忆保持率</h3><p>每次复习都会强化记忆连接</p><svg viewBox="0 0 300 100" style="width:100%;height:auto"><!-- 改动：高度改为自动，图里的字不再被压得很小 --><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0e7490" stop-opacity="0.3"/><stop offset="100%" stop-color="#0e7490" stop-opacity="0"/></linearGradient></defs><line x1="30" y1="85" x2="290" y2="85" stroke="#e2e8f0" stroke-width="1"/><line x1="30" y1="10" x2="30" y2="85" stroke="#e2e8f0" stroke-width="1"/><path d="M30,15 Q80,20 120,55 Q160,75 290,80" fill="none" stroke="#fca5a5" stroke-width="2" stroke-dasharray="4,4"/><path d="M30,15 L60,30 L60,18 L90,33 L90,16 L150,35 L150,14 L210,28 L210,13 L290,22" fill="none" stroke="#0e7490" stroke-width="2.5"/><path d="M30,15 L60,30 L60,18 L90,33 L90,16 L150,35 L150,14 L210,28 L210,13 L290,22 L290,85 L30,85 Z" fill="url(#cg)"/><text x="160" y="97" text-anchor="middle" font-size="12" fill="#64748b">时间 →</text><text x="155" y="72" font-size="12" fill="#dc2626">不复习</text><text x="248" y="18" font-size="12" fill="#0e7490">定期复习</text></svg>';
   calCol.appendChild(curveCard);
 
   grid.appendChild(calCol);
@@ -552,7 +402,7 @@ function render(){
   if(dayLearned.length>0){
     const sec=h('div',{className:'section-card'},
       h('div',{className:'section-title'},
-        h('span',{className:'section-dot',style:{background:'#6366f1'}}),
+        h('span',{className:'section-dot',style:{background:'#0e7490'}}),
         '当日学习 · '+dayLearned.length+'项'
       )
     );
@@ -573,9 +423,9 @@ function render(){
       const rd=addDays(state.selectedDate,interval);
       const isPast=rd<today;
       tags.appendChild(h('span',{className:'schedule-tag',style:{
-        background:isPast?'rgba(239,68,68,0.08)':'rgba(99,102,241,0.08)',
-        color:isPast?'#ef4444':'#6366f1',
-        borderColor:isPast?'rgba(239,68,68,0.15)':'rgba(99,102,241,0.15)'
+        background:isPast?'rgba(239,68,68,0.08)':'rgba(14,116,144,0.08)',
+        color:isPast?'#ef4444':'#0e7490',
+        borderColor:isPast?'rgba(239,68,68,0.15)':'rgba(14,116,144,0.15)'
       },onclick:()=>{state.selectedDate=rd;state.currentMonth=rd.getMonth();state.currentYear=rd.getFullYear();render();}},
         (rd.getMonth()+1)+'/'+rd.getDate()+' ('+REVIEW_LABELS[i]+')'
       ));
@@ -615,7 +465,7 @@ function render(){
         }},
           h('div',{className:'check-box',onclick:()=>toggleCompleted(selKey,r.content,r.learnedOn),style:{
             background:done?'#10b981':'transparent',
-            borderColor:done?'#10b981':'#cbd5e1',color:'#fff',fontSize:'12px',fontWeight:'700'
+            borderColor:done?'#10b981':'#cbd5e1',color:'#fff',fontSize:'13px',fontWeight:'700'
           }},done?'✓':''),
           h('span',{className:'review-text',style:{textDecoration:done?'line-through':'none',opacity:done?'0.5':'1',flex:'1'}},r.content)
         ));

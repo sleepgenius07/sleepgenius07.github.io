@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- 注意：这里没有 user-scalable=no，用户可以自由缩放页面 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0e7490">
+<meta name="description" content="两分钟学会使用艾宾浩斯复习日程：添加学习内容、查看复习安排、打勾完成。">
+<title>使用指南 - 艾宾浩斯复习日程</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>🧠</text></svg>">
+<!-- 全站共用样式 -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- 导航栏：每个页面都是同一段，当前页用 aria-current="page" 标出来（样式在 style.css） -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">🧠 <span>艾宾浩斯复习日程</span></a>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="index.html">首页</a>
+      <a href="app/index.html">开始复习</a>
+      <a href="guide.html" aria-current="page">使用指南</a>
+      <a href="privacy.html">隐私说明</a>
+      <a href="about.html">关于</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+<h1 class="page-title">使用指南</h1>
+<p class="page-lead">从添加第一条学习内容，到每天完成复习，一共四步。</p>
+
+<h2>一、添加学习内容</h2>
+<ol>
+  <li>点击顶部的“<a href="app/index.html">开始复习</a>”进入应用，日历里会默认选中今天。</li>
+  <li>想记录哪一天的内容，就点日历上的那一天（补记以前的内容也可以）。</li>
+  <li>在“记录学习内容”的输入框里写下知识点，<strong>每行一个</strong>。</li>
+  <li>点“＋ 添加到 X月X日”。添加成功后，下方会出现这一天的学习列表和“📅 复习安排”。</li>
+</ol>
+
+<h2>二、系统怎么安排复习</h2>
+<p>每个知识点会在学习日之后的这些天各安排一次复习：</p>
+  <div class="timeline">
+    <div class="step"><div class="num">1</div><div class="lbl">天后 · 第1轮</div></div>
+    <div class="step"><div class="num">2</div><div class="lbl">天后 · 第2轮</div></div>
+    <div class="step"><div class="num">4</div><div class="lbl">天后 · 第3轮</div></div>
+    <div class="step"><div class="num">7</div><div class="lbl">天后 · 第4轮</div></div>
+    <div class="step"><div class="num">15</div><div class="lbl">天后 · 第5轮</div></div>
+    <div class="step"><div class="num">30</div><div class="lbl">天后 · 第6轮</div></div>
+  </div>
+<p>在“复习安排”里点任意一个日期标签，日历会直接跳到那一天。</p>
+
+<h2>三、读懂日历上的圆点</h2>
+<ul>
+  <li><strong style="color:#0e7490">青蓝色</strong>：这一天有学习内容</li>
+  <li><strong style="color:#b45309">橙色</strong>：这一天有待复习的内容</li>
+  <li><strong style="color:#047857">绿色</strong>：这一天的复习全部完成</li>
+  <li><strong style="color:#b91c1c">红色</strong>：复习日期已过，但还没有完成（逾期）</li>
+</ul>
+<p>点日历上的某一天，右边（手机上是下方）会显示这一天要复习的内容，按“学于哪天”分组，并标出第几次复习。每组右侧的百分比是“记忆保持率”，只是一个示意值，说明见<a href="about.html">关于</a>页。</p>
+
+<h2>四、完成复习</h2>
+<ul>
+  <li>复习完一条，点它左边的方框打勾；点错了再点一次就能取消。</li>
+  <li>打开应用时，如果今天有复习或有逾期内容，会自动弹出“今日复习摘要”。点“开始复习”或右上角 ✕ 关闭；想再看，随时点顶部的“📋 今日摘要”。</li>
+  <li>点“📊 统计”可以看到已学内容数、学习天数、已完成的复习次数。</li>
+  <li>顶部的 🔥 是连续坚持天数：某一天的复习全部完成才算数，中断就会重新计算。</li>
+  <li>记错了？在“当日学习”列表里点那一条右边的 ✕ 就能删除，它的复习安排也会一起消失。</li>
+</ul>
+
+<h2>要注意的事</h2>
+<div class="note warn">
+  <p><strong>你的记录只保存在当前设备的当前浏览器里。</strong>清除浏览器数据、使用无痕/隐私窗口、换手机或换浏览器，都会看到一个空白的日程。目前应用<strong>没有导出或备份功能</strong>，请不要把它当作唯一的备份。</p>
+</div>
+<p>手机上想像 App 一样使用，可以在浏览器菜单里选择“添加到主屏幕”。</p>
+</main>
+
+<footer class="site-footer">
+  <p><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></p>
+  <p>© 2026 sleepgenius07 · <a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
+</footer>
+</body>
+</html>
