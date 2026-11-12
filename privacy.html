@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <!-- 注意：这里没有 user-scalable=no，用户可以自由缩放页面 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0e7490">
+<!-- 浏览器顶栏的颜色：日间用纸色，夜间用深色 -->
+<meta name="theme-color" content="#eef2e6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12171f" media="(prefers-color-scheme: dark)">
 <meta name="description" content="说明艾宾浩斯复习日程会保存哪些数据、存放在哪里，以及用到了哪些第三方服务。">
 <title>隐私说明 - 艾宾浩斯复习日程</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -29,26 +31,34 @@
 <main class="container">
 <h1 class="page-title">隐私说明</h1>
 <p class="page-lead">简单地说：你的学习记录只保存在你自己的浏览器里，本站没有账号系统，也不会把记录上传到任何服务器。</p>
-<p class="muted">最后更新：2026年11月3日</p>
+<p class="muted">最后更新：2026年11月12日</p>
 
 <h2>我们保存了什么</h2>
 <ul>
   <li><strong>你输入的学习内容</strong>和<strong>复习完成记录</strong>，保存在浏览器的本地存储（localStorage）里，只存在你的设备上。</li>
+  <li>“今天的摘要已经看过了”这个标记，保存在浏览器的会话存储（sessionStorage）里，关掉标签页就会清除。</li>
   <li>本站<strong>不需要注册或登录</strong>，不收集姓名、邮箱、手机号等个人信息。</li>
   <li>本站的代码<strong>不会把这些记录发送出去</strong>，我们也无法查看你的记录。</li>
   <li>本站没有使用统计分析、广告或追踪脚本，也没有设置 cookie。</li>
 </ul>
 
+<h2>备份文件</h2>
+<ul>
+  <li><strong>导出备份</strong>是在你的浏览器里把记录生成一个文件，直接下载到你的设备上，不经过任何服务器。这个文件里是你写下的全部学习内容，没有加密，请自己保管好。</li>
+  <li><strong>导入备份</strong>时，文件只在你的浏览器里被读取，同样不会上传。</li>
+</ul>
+
 <h2>用到的第三方服务</h2>
-<p>网站字体使用你设备上自带的字体（如微软雅黑），不会从其他网站下载字体。唯一的第三方是网站托管方：</p>
+<p>网站字体使用你设备上自带的字体（如微软雅黑、楷体），不会从其他网站下载字体。唯一的第三方是网站托管方：</p>
 <h3>GitHub Pages（网站托管）</h3>
 <p>本站托管在 GitHub Pages。作为托管方，GitHub 可能会按其隐私声明记录访问日志（例如 IP 地址）。</p>
 
 <h2>如何查看或删除你的数据</h2>
 <ul>
-  <li>删除单条学习内容：在应用里点那一条右边的 ✕。</li>
-  <li>删除全部数据：在浏览器设置里清除本站（sleepgenius07.github.io）的网站数据。清除后<strong>无法恢复</strong>。</li>
-  <li>因为数据只在你的设备上，换设备或清除浏览器数据后记录会丢失。</li>
+  <li>查看全部数据：在应用里点“备份”，导出的文件里就是本站保存的全部记录。</li>
+  <li>删除单条学习内容：在应用里点那一条右边的叉。</li>
+  <li>删除全部数据：在浏览器设置里清除本站（sleepgenius07.github.io）的网站数据。清除后，没有备份文件就<strong>无法恢复</strong>。</li>
+  <li>因为数据只在你的设备上，换设备或清除浏览器数据后记录会丢失，除非事先导出了备份。</li>
 </ul>
 
 <h2>变更与联系</h2>
@@ -56,8 +66,10 @@
 </main>
 
 <footer class="site-footer">
-  <p><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></p>
-  <p>© 2026 sleepgenius07 · <a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
+  <div class="site-footer-inner">
+    <nav aria-label="页脚导航"><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></nav>
+    <p>© 2026 sleepgenius07，<a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
+  </div>
 </footer>
 </body>
 </html>

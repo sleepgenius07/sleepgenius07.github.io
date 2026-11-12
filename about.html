@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <!-- 注意：这里没有 user-scalable=no，用户可以自由缩放页面 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0e7490">
+<!-- 浏览器顶栏的颜色：日间用纸色，夜间用深色 -->
+<meta name="theme-color" content="#eef2e6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12171f" media="(prefers-color-scheme: dark)">
 <meta name="description" content="关于艾宾浩斯复习日程：做它的原因、背后的遗忘曲线，以及对复习安排和记忆保持率的说明。">
 <title>关于 - 艾宾浩斯复习日程</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -39,18 +41,23 @@
 <h2>需要说明的两件事</h2>
 <div class="note">
   <p><strong>1. 复习间隔不是艾宾浩斯规定的。</strong>本站使用的 1、2、4、7、15、30 天，是一种常见的经验性安排，目的是让复习越来越稀疏。它不是艾宾浩斯原始实验里给出的数字，也不保证对每个人、每类内容都最优，你可以把它当作一个好用的起点。</p>
-  <p><strong>2. “记忆保持率”只是示意。</strong>应用里显示的百分比，是用公式 e<sup>−0.3×天数</sup> 算出来的（最低显示 20%），用来直观地表示“隔得越久越容易忘”，并不是对你个人记忆的测量。</p>
+  <p><strong>2. “保持率”和曲线图只是示意。</strong>应用里显示的百分比，是用公式 20% + 80% × e<sup>−0.45×天数</sup> 算出来的：刚学完是 100%，隔得越久越低，最低 20%。首页那张图里“按时复习”的锯齿线，假设每复习一次遗忘速度就乘以 0.55。这些数字只用来直观地表示“隔得越久越容易忘、复习之后忘得更慢”，并不是对你个人记忆的测量。</p>
 </div>
+
+<h2>为什么长得像一本笔记本</h2>
+<p>页面的底色取自护眼作业本的纸，文字是蓝黑墨水的颜色，按钮是圆珠笔蓝，“今天”用荧光笔标出来。保持率用墨色的深浅表示：记得越牢墨越浓，忘得越多墨越淡。</p>
 
 <h2>技术与开源</h2>
 <p>网站由纯 HTML、CSS 和 JavaScript 写成，没有后端，托管在 GitHub Pages。源码公开在 <a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub</a>，欢迎提意见。数据如何存放，请看<a href="privacy.html">隐私说明</a>。</p>
 
-<p style="margin-top:24px"><a class="btn" href="app/index.html">打开应用 →</a></p>
+<p style="margin-top:28px"><a class="btn" href="app/index.html">开始复习</a></p>
 </main>
 
 <footer class="site-footer">
-  <p><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></p>
-  <p>© 2026 sleepgenius07 · <a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
+  <div class="site-footer-inner">
+    <nav aria-label="页脚导航"><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></nav>
+    <p>© 2026 sleepgenius07，<a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
+  </div>
 </footer>
 </body>
 </html>

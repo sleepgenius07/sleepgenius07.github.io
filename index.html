@@ -4,12 +4,15 @@
 <meta charset="UTF-8">
 <!-- 注意：这里没有 user-scalable=no，用户可以自由缩放页面 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0e7490">
+<!-- 浏览器顶栏的颜色：日间用纸色，夜间用深色 -->
+<meta name="theme-color" content="#eef2e6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12171f" media="(prefers-color-scheme: dark)">
 <meta name="description" content="输入今天学的内容，自动按艾宾浩斯遗忘曲线安排复习日程。免费、免注册，数据只存在你的浏览器里。">
 <title>艾宾浩斯复习日程</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<!-- 全站共用样式 -->
+<!-- 全站共用样式 + 首页专用样式 -->
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="home.css">
 </head>
 <body>
 <!-- 导航栏：每个页面都是同一段，当前页用 aria-current="page" 标出来（样式在 style.css） -->
@@ -26,48 +29,185 @@
   </div>
 </header>
 
-<main class="container">
-<section class="hero">
-  <h1>把<em>遗忘曲线</em>变成<br>你的每日复习日程</h1>
-  <p>每天把学到的内容记下来，系统会自动算好哪天该复习什么，你只需要打开日历、打勾完成。</p>
-  <a class="btn" href="app/index.html">打开应用 →</a>
-  <a class="btn ghost" href="guide.html">使用指南</a>
-</section>
+<main>
+<!-- ===== 首屏：标题 + 遗忘曲线图 ===== -->
+<section class="hero wrap">
+  <h1>学过的东西，<br>别让它悄悄褪色</h1>
+  <p class="hero-lead">把今天学的内容记下来，之后哪天该复习什么，日历替你记着。免费，不用注册，打开就能用。</p>
+  <div class="btn-row">
+    <a class="btn" href="app/index.html">开始复习</a>
+    <a class="btn ghost" href="guide.html">先看使用指南</a>
+  </div>
 
-<section>
-  <h2>它能做什么</h2>
-  <div class="card-grid">
-    <div class="card"><div class="icon">✏️</div><h3>输入即排期</h3><p>每行写一个知识点，点一下添加，6 次复习日期自动生成。</p></div>
-    <div class="card"><div class="icon">📅</div><h3>日历一目了然</h3><p>彩色圆点标出已学、待复习、已完成和逾期的日子。</p></div>
-    <div class="card"><div class="icon">🔥</div><h3>打卡与摘要</h3><p>每天打开时弹出今日复习摘要，并统计连续坚持的天数。</p></div>
-    <div class="card"><div class="icon">🔒</div><h3>数据留在本机</h3><p>无需注册登录，记录只保存在你自己的浏览器里。</p></div>
+  <figure class="curve">
+    <!-- 这张图由页面最下面的脚本画出来；#curve-plot 是放图的位置 -->
+    <div id="curve-plot" class="curve-plot" role="img"
+         aria-label="遗忘曲线示意图：不复习时，记住的比例在一周内掉到两成左右；在学完后第 1、2、4、7、15、30 天各复习一次，记住的比例每次都回到满格，而且掉得越来越慢。"></div>
+    <figcaption>
+      横轴是学完之后的天数。标出来的 1、2、4、7、15、30，就是六次复习的日子：一开始排得密，后来越来越稀。
+    </figcaption>
+  </figure>
+
+  <!-- 褪色演示：同一个单词，隔得越久墨色越淡。--keep 是“还记得多少”，样式里用它当透明度 -->
+  <div class="fade">
+    <p class="fade-title">同一个单词，背完就不管它，在脑子里会变成这样：</p>
+    <ol class="fade-row">
+      <li><span class="fade-word" style="--keep:1">abandon</span><span class="fade-when">刚背完</span><span class="fade-pct">100%</span></li>
+      <li><span class="fade-word" style="--keep:.71">abandon</span><span class="fade-when">1 天后</span><span class="fade-pct">71%</span></li>
+      <li><span class="fade-word" style="--keep:.53">abandon</span><span class="fade-when">2 天后</span><span class="fade-pct">53%</span></li>
+      <li><span class="fade-word" style="--keep:.33">abandon</span><span class="fade-when">4 天后</span><span class="fade-pct">33%</span></li>
+      <li><span class="fade-word" style="--keep:.23">abandon</span><span class="fade-when">7 天后</span><span class="fade-pct">23%</span></li>
+    </ol>
+    <p class="muted">图和百分比都是示意，用来说明“隔得越久越容易忘”，不是对你个人记忆的测量。详见<a href="about.html">关于</a>页。</p>
   </div>
 </section>
 
-<section>
-  <h2>复习节奏</h2>
-  <p>每个知识点在学习后的第 1、2、4、7、15、30 天各复习一次：</p>
-  <div class="timeline">
-    <div class="step"><div class="num">1</div><div class="lbl">天后 · 第1轮</div></div>
-    <div class="step"><div class="num">2</div><div class="lbl">天后 · 第2轮</div></div>
-    <div class="step"><div class="num">4</div><div class="lbl">天后 · 第3轮</div></div>
-    <div class="step"><div class="num">7</div><div class="lbl">天后 · 第4轮</div></div>
-    <div class="step"><div class="num">15</div><div class="lbl">天后 · 第5轮</div></div>
-    <div class="step"><div class="num">30</div><div class="lbl">天后 · 第6轮</div></div>
+<!-- ===== 三步用法（这确实是先后顺序，所以编号）===== -->
+<section class="steps-band">
+  <div class="wrap">
+    <h2>用起来只有三步</h2>
+    <ol class="steps">
+      <li>
+        <span class="step-no">1</span>
+        <h3>记下今天学的</h3>
+        <p>在输入框里每行写一个知识点，点一下“添加”。补记前几天的也可以。</p>
+      </li>
+      <li>
+        <span class="step-no">2</span>
+        <h3>六次复习自动排好</h3>
+        <p>学完后的第 1、2、4、7、15、30 天，这条内容会各出现在日历上一次。</p>
+      </li>
+      <li>
+        <span class="step-no">3</span>
+        <h3>到了那天，打勾</h3>
+        <p>打开就是当天要复习的清单，复习完一条勾一条。漏掉的会标成逾期，可以补上。</p>
+      </li>
+    </ol>
   </div>
-  <p class="muted">这是常见的间隔复习安排，详细说明见<a href="about.html">关于</a>页。</p>
 </section>
 
-<section>
-  <div class="note">
-    <p><strong>第一次使用？</strong>先看<a href="guide.html">使用指南</a>，两分钟就能上手。想知道数据怎么存放，请看<a href="privacy.html">隐私说明</a>。</p>
+<!-- ===== 示例清单：可以真的点一点 ===== -->
+<section class="wrap demo">
+  <div class="demo-text">
+    <h2>每天打开，看到的就是一张清单</h2>
+    <p>右边是个例子，可以点点看。真正的清单按“哪天学的”分组，并告诉你这是第几次复习。</p>
+    <p>日历上的圆点表示每一天的状态：</p>
+    <ul class="dot-list">
+      <li><span class="dot learned"></span>蓝色：这一天记了新内容</li>
+      <li><span class="dot due"></span>黄色：这一天有要复习的</li>
+      <li><span class="dot done"></span>绿色：这一天的复习全部完成</li>
+      <li><span class="dot late"></span>红色：日子过了，还没复习完</li>
+    </ul>
+  </div>
+
+  <div class="sheet demo-sheet" aria-label="示例清单">
+    <div class="demo-head"><strong>需要复习</strong><span>示例</span></div>
+    <p class="demo-group">昨天学的，第 1 次复习</p>
+    <label class="demo-item"><input type="checkbox" checked><span class="tick" aria-hidden="true"></span><span class="demo-content">英语单词：abandon, abolish</span></label>
+    <label class="demo-item"><input type="checkbox"><span class="tick" aria-hidden="true"></span><span class="demo-content">数学：导数的基本公式</span></label>
+    <p class="demo-group">一周前学的，第 4 次复习</p>
+    <label class="demo-item"><input type="checkbox"><span class="tick" aria-hidden="true"></span><span class="demo-content">电路：基尔霍夫电流定律</span></label>
+  </div>
+</section>
+
+<!-- ===== 数据说明 ===== -->
+<section class="closing">
+  <div class="wrap">
+  <h2>记录只留在你的设备上</h2>
+  <p>没有账号，也不上传。你写下的内容只保存在这台设备的浏览器里，换设备之前可以导出一份备份文件带走。想了解细节，请看<a href="privacy.html">隐私说明</a>。</p>
+  <div class="btn-row">
+    <a class="btn" href="app/index.html">开始复习</a>
+  </div>
   </div>
 </section>
 </main>
 
 <footer class="site-footer">
-  <p><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></p>
-  <p>© 2026 sleepgenius07 · <a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
+  <div class="site-footer-inner">
+    <nav aria-label="页脚导航"><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></nav>
+    <p>© 2026 sleepgenius07，<a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
+  </div>
 </footer>
+
+<script>
+// ========== 首页的遗忘曲线图 ==========
+// 这张图不是图片，是用下面的公式现算、现画出来的 SVG。
+// 好处：手机和电脑宽度不同，可以按实际宽度重画，字不会被压小。
+
+const REVIEW_DAYS = [1, 2, 4, 7, 15, 30];   // 六次复习分别在学完后的第几天
+const LAST_DAY = 32;                         // 横轴画到第 32 天
+
+// “还记得多少”的示意公式：从 100% 开始往下掉，最低掉到 20%。
+// k 越大掉得越快。（和应用里用的是同一个公式）
+function keep(days, k) { return 0.2 + 0.8 * Math.exp(-k * days); }
+const K_START = 0.45;        // 第一次学完之后的遗忘速度
+const K_SHRINK = 0.55;       // 每复习一次，遗忘速度乘以 0.55（忘得更慢）
+
+function drawCurve(animate) {
+  const box = document.getElementById('curve-plot');
+  const W = box.clientWidth;
+  const H = W < 520 ? 240 : 320;
+  const left = 46, right = 14, top = 16, bottom = 40;
+  const x = d => left + (W - left - right) * d / LAST_DAY;      // 第几天 → 横坐标
+  const y = r => top + (H - top - bottom) * (1 - r);            // 记住的比例 → 纵坐标
+  const f = n => n.toFixed(1);
+
+  // 1) 不复习的曲线：一路往下掉
+  let fading = '';
+  for (let d = 0; d <= LAST_DAY; d += 0.25) fading += (d ? 'L' : 'M') + f(x(d)) + ',' + f(y(keep(d, K_START)));
+
+  // 2) 按时复习的曲线：每到复习日回到 100%，之后掉得更慢，所以是锯齿形
+  let saw = 'M' + f(x(0)) + ',' + f(y(1));
+  let from = 0, k = K_START;
+  REVIEW_DAYS.concat(LAST_DAY).forEach((to, i) => {
+    for (let d = from + 0.25; d <= to; d += 0.25) saw += 'L' + f(x(d)) + ',' + f(y(keep(d - from, k)));
+    if (i < REVIEW_DAYS.length) saw += 'L' + f(x(to)) + ',' + f(y(1));   // 复习：竖直回到 100%
+    from = to; k *= K_SHRINK;
+  });
+  const area = saw + 'L' + f(x(LAST_DAY)) + ',' + f(y(0)) + 'L' + f(x(0)) + ',' + f(y(0)) + 'Z';
+
+  // 手机上第 1 天和第 2 天挨得很近，把这两个数字一个往左靠、一个往右靠，免得粘在一起
+  const narrow = W < 520;
+  const dayAnchor = d => !narrow ? 'middle' : d === 1 ? 'end' : d === 2 ? 'start' : 'middle';
+  const dayShift = d => !narrow ? 0 : d === 1 ? 2 : d === 2 ? -2 : 0;
+
+  // 3) 横线、刻度、文字
+  const grid = [1, 0.5, 0].map(r =>
+    `<line class="c-grid" x1="${left}" x2="${W - right}" y1="${f(y(r))}" y2="${f(y(r))}"/>` +
+    `<text class="c-ylab" x="${left - 8}" y="${f(y(r) + 4)}" text-anchor="end">${r * 100}%</text>`).join('');
+  const marks = REVIEW_DAYS.map(d =>
+    `<line class="c-drop" x1="${f(x(d))}" x2="${f(x(d))}" y1="${f(y(1))}" y2="${f(y(0))}"/>` +
+    `<circle class="c-dot" cx="${f(x(d))}" cy="${f(y(1))}" r="4"/>` +
+    `<text class="c-day" x="${f(x(d) + dayShift(d))}" y="${f(y(0) + 21)}" text-anchor="${dayAnchor(d)}">${d}</text>`).join('');
+  const labelDay = narrow ? 19 : 20;
+
+  box.innerHTML =
+    `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <defs><linearGradient id="fadeInk" gradientUnits="userSpaceOnUse" x1="${left}" x2="${W - right}" y1="0" y2="0">
+        <stop offset="0" class="c-stop-a"/><stop offset="0.3" class="c-stop-b"/><stop offset="1" class="c-stop-b"/>
+      </linearGradient></defs>
+      ${grid}
+      <path class="c-area" d="${area}"/>
+      ${marks}
+      ${narrow ? '' : `<text class="c-ylab" x="${f(x(0))}" y="${f(y(0) + 20)}" text-anchor="middle">学完</text>`}
+      <text class="c-ylab" x="${W - right}" y="${f(y(0) + 36)}" text-anchor="end">学完后的天数</text>
+      <path class="c-fading" d="${fading}" stroke="url(#fadeInk)"/>
+      <path class="c-saw${animate ? ' draw' : ''}" d="${saw}" pathLength="1"/>
+      <text class="c-lab-saw" x="${f(x(labelDay))}" y="${f(y(0.62))}">按时复习六次</text>
+      <text class="c-lab-fading" x="${f(x(labelDay))}" y="${f(y(0.27))}">一次都不复习</text>
+    </svg>`;
+}
+
+drawCurve(true);
+// 窗口宽度变了（比如手机横过来）就重画一遍，这次不再播放动画
+let lastWidth = document.getElementById('curve-plot').clientWidth, timer;
+window.addEventListener('resize', () => {
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    const w = document.getElementById('curve-plot').clientWidth;
+    if (w !== lastWidth) { lastWidth = w; drawCurve(false); }
+  }, 150);
+});
+</script>
 </body>
 </html>
