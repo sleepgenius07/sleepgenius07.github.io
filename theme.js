@@ -2,7 +2,7 @@
 //  界面颜色：跟随系统 / 日间 / 夜间
 //  每个页面的 <head> 里都引用这个文件。它做两件事：
 //  1) 页面一打开，就按上次的选择设置颜色（放在 <head> 里是为了避免先闪一下别的颜色）
-//  2) 在页面里所有写了 data-theme-switch 的地方，放上三个切换按钮
+//  2) 在页面里写了 data-theme-switch 的地方（每个页面顶部的导航栏里），放上三个切换按钮
 //  原理：选“日间/夜间”时给 <html> 加 data-theme="light"/"dark"，style.css 根据它换颜色；
 //        选“跟随系统”时去掉这个属性，颜色由系统的深色模式决定。
 // ============================================================
@@ -54,8 +54,17 @@
       b.dataset.themeValue = o[0];
       b.dataset.fk = 'theme:' + o[0];
       b.textContent = o[1];
+      b.title = '界面颜色：' + o[1];
       b.setAttribute('aria-checked', String(o[0] === get()));   // 现在选中的是哪一个
-      b.addEventListener('click', function () { set(o[0]); if (onChange) onChange(o[0]); });
+      b.addEventListener('click', function () {
+        // 屏幕窄时只显示一个按钮（其余两个被样式藏起来了）：这时点它是换到下一种
+        var hidden = false, sibs = el.children;
+        for (var k = 0; k < sibs.length; k++) if (getComputedStyle(sibs[k]).display === 'none') hidden = true;
+        var v = o[0];
+        if (hidden) { for (var j = 0; j < OPTIONS.length; j++) if (OPTIONS[j][0] === o[0]) v = OPTIONS[(j + 1) % OPTIONS.length][0]; }
+        set(v);
+        if (onChange) onChange(v);
+      });
       el.appendChild(b);
     });
     refresh();
@@ -68,5 +77,5 @@
     for (var i = 0; i < spots.length; i++) mount(spots[i]);
   });
 
-  window.SiteTheme = { get: get, set: set, mount: mount };   // 给应用页的“设置”弹窗用
+  window.SiteTheme = { get: get, set: set, mount: mount };
 })();

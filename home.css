@@ -49,7 +49,7 @@
 .step-no{font-family:var(--font-num);font-size:44px;line-height:1;color:var(--pen);grid-row:span 2}
 .steps h3{font-size:18px;font-weight:700;margin-bottom:4px}
 .steps p{color:var(--ink-2);font-size:15px}
-.steps-note{margin-top:26px;font-size:15px;color:var(--ink-2)}
+.steps-note{margin-top:26px;font-size:15px;color:var(--ink-2);text-indent:2em}      /* 首行缩进两个字 */
 
 /* ----- 平板和手机：改成上下排列 ----- */
 @media(max-width:860px){

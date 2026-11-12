@@ -27,15 +27,20 @@
       <a href="privacy.html">隐私说明</a>
       <a href="about.html" aria-current="page">关于</a>
     </nav>
+    <!-- 界面颜色开关（跟随系统 / 日间 / 夜间）：三个按钮由 theme.js 放进这个位置，每个页面都有 -->
+    <span data-theme-switch></span>
   </div>
 </header>
 
 <main class="container">
 <h1 class="page-title">关于</h1>
+<!-- 版本号：每次更新网站，记得把这里的数字改一下 -->
+<p class="version">当前版本：v3.0.12</p>
 <p class="page-lead">一个免费、免注册的小工具，帮你把“什么时候该复习什么”交给日历来记。</p>
 
 <h2>为什么做它</h2>
-<p>学过的东西容易忘，复习又很容易拖。这个网站想解决的只有一件事：你把当天学的内容写下来，它就替你算好之后每一次复习的日期，打开就知道今天该做什么。</p>
+<p>主包是一个即将考研的工科牲，由于学过的东西容易忘，复习又很容易拖。所以做这个网站想解决的只有一件事：你把当天学的内容写下来，它就替你算好之后每一次复习的日期，打开就知道今天该做什么。学习开源精神，欢迎各位前来共同探讨学习、改善此网站，为实现共产主义而进步。</p>
+<p>开源更像一种协作方式和文化，而不是一套政治经济制度。不同立场的人都能从里面找到自己认同的价值，有人看到共享与互助，有人看到自由竞争与创新，这可能正是它能吸引这么多人参与的原因吧。</p>
 
 <h2>艾宾浩斯遗忘曲线</h2>
 <p>赫尔曼·艾宾浩斯（Hermann Ebbinghaus）是德国心理学家，1885 年发表了关于记忆的实验研究。他发现刚学完的内容遗忘得最快，之后逐渐放缓，而在合适的时间点复习，能让记忆保持得更久。这条“先快后慢”的曲线就是遗忘曲线，也是“间隔复习”方法的由来。</p>
@@ -47,19 +52,17 @@
 </div>
 
 <h2>为什么长得像一本笔记本</h2>
-<p>页面的底色取自护眼作业本的纸，文字是蓝黑墨水的颜色，按钮是圆珠笔蓝，“今天”用荧光笔标出来。保持率用墨色的深浅表示：记得越牢墨越浓，忘得越多墨越淡。不喜欢浅色的话，可以在页面最下面把界面颜色换成夜间。</p>
+<p>页面的底色取自护眼作业本的纸，文字是蓝黑墨水的颜色，按钮是圆珠笔蓝，“今天”用荧光笔标出来。保持率用墨色的深浅表示：记得越牢墨越浓，忘得越多墨越淡。不喜欢浅色的话，可以在页面右上角把界面颜色换成夜间。</p>
 
 <h2>技术与开源</h2>
 <p>网站由纯 HTML、CSS 和 JavaScript 写成，没有后端，托管在 GitHub Pages。源码公开在 <a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub</a>，欢迎提意见。数据如何存放，请看<a href="privacy.html">隐私说明</a>。</p>
 
-<p style="margin-top:28px"><a class="btn" href="app/index.html">开始复习</a></p>
+<p class="no-indent" style="margin-top:28px"><a class="btn" href="app/index.html">开始复习</a></p>
 </main>
 
 <footer class="site-footer">
   <div class="site-footer-inner">
     <nav aria-label="页脚导航"><a href="index.html">首页</a><a href="app/index.html">开始复习</a><a href="guide.html">使用指南</a><a href="privacy.html">隐私说明</a><a href="about.html">关于</a></nav>
-    <!-- 界面颜色开关：三个按钮由 theme.js 放进 data-theme-switch 这个位置 -->
-    <div class="theme-row"><span>界面颜色</span><span data-theme-switch></span></div>
     <p>© 2026 sleepgenius07，<a href="https://github.com/sleepgenius07/sleepgenius07.github.io">GitHub 源码</a></p>
   </div>
 </footer>

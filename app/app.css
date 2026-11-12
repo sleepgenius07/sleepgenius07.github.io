@@ -3,9 +3,9 @@
    这里只放日历、清单、图表、弹窗这些“应用本身”才用到的样式。
 
    版面（电脑上）：
-     顶部一行   今天的日期和进度 ………………………… 逾期 / 今日摘要 / 设置
-     第一排     日历 | 记录 | 复习强度图      ← 三块一样高，高度由日历决定
-     第二排     需要复习 | 这一天学的         ← 内容多了在块里面滚动，页面本身不变长 */
+     顶部一行   今天的日期和进度 ………………………… 逾期 / 今日摘要 / 备份
+     第一排     日历 | 记录 | 复习强度图      ← 三栏一样高（高度由日历决定），内容放不下就在栏里滚动
+     第二排     需要复习 | 这一天学的         ← 不在框里滚动，内容多少页面就多长 */
 
 .app{width:100%}
 .app-page .nav-inner{max-width:1280px}      /* 应用页比其他页面宽，导航栏也跟着放宽，左右对齐 */
@@ -44,9 +44,14 @@
 .row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 
 /* “记录”和“复习强度图”自己不撑高度：里面的 .fill 用绝对定位铺满，
-   所以第一排的高度完全由日历决定，三块自然一样高 */
+   所以第一排的高度完全由日历决定，三栏自然一样高。
+   三栏的内容放不下时，都可以用鼠标滚轮在栏里上下滚动（overflow-y:auto） */
 .record,.load{position:relative;min-height:0}
 .fill{position:absolute;inset:0;display:flex;flex-direction:column;padding:12px 16px 14px;min-height:0}
+.cal{overflow-y:auto}
+.load .fill{overflow-y:auto}
+/* 栏里的滚动条做细一点 */
+.cal,.load .fill,.record-body{scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
 
 /* 每一块最上面的标题行：下面一道粗线 */
 .block-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:7px;border-bottom:2px solid var(--ink);flex-shrink:0}
@@ -80,56 +85,92 @@
 .legend{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--rule-soft);font-size:13px;color:var(--ink-2)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 
-/* ----- 记录 ----- */
-.record-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;margin-top:6px}
-/* 输入框：背景画着横线，一行就是一个知识点。字号 16px（小于 16px 时 iPhone 会自动放大页面） */
-.record textarea{
-  display:block;width:100%;padding:0 2px;
-  border:0;border-bottom:1px solid var(--rule);border-radius:0;resize:none;
+/* ----- 记录：一个科目就是一个小框 ----- */
+.record-body{flex:1;min-height:0;overflow-y:auto;margin:8px -6px 0;padding:0 6px 2px}     /* 框多了就在这一栏里滚动 */
+.sbox{border:1px solid var(--rule);border-radius:var(--radius);padding:6px 10px 8px;margin-bottom:8px}
+.sbox:focus-within{border-color:var(--pen)}
+.box-head{display:flex;align-items:center;gap:8px}
+/* 框的名字：看起来像一行字，点一下就能改 */
+.box-name{flex:1;min-width:0;height:28px;padding:0 2px;border:0;border-bottom:1px dashed transparent;background:transparent;font-family:inherit;font-size:15px;font-weight:700;color:var(--pen)}
+.box-name::placeholder{color:var(--ink-3);font-weight:400;font-size:14px;opacity:.85}
+.box-name:hover{border-bottom-color:var(--rule)}
+.box-name:focus{outline:none;border-bottom:1px solid var(--pen)}
+.box-count{font-size:12px;color:var(--ink-3);white-space:nowrap}
+.box-count.full{color:var(--late);font-weight:700}                 /* 写满 12 行了 */
+.box-del{width:26px;height:26px;margin-right:-4px;border:0;border-radius:var(--radius);background:transparent;color:var(--ink-3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.box-del:hover{color:var(--late);background:var(--late-wash)}
+.box-del svg{width:15px;height:15px}
+/* 输入框：背景画着横线，一行就是一个知识点。空的时候 2 行高，高度由 app.js 里的 autoGrow 跟着内容调。
+   字号 16px（小于 16px 时 iPhone 会自动放大页面）；line-height 要和 app.js 里的 LINE_H 一致 */
+.sbox textarea{
+  display:block;width:100%;height:65px;padding:0 2px;
+  border:0;border-bottom:1px solid var(--rule-soft);border-radius:0;resize:none;overflow-y:auto;
   font-family:inherit;font-size:16px;line-height:32px;color:var(--ink);
   background-color:transparent;
   background-image:linear-gradient(to bottom,transparent 31px,var(--rule-soft) 31px);
   background-size:100% 32px;background-attachment:local;
 }
-.record textarea.big{flex:1;min-height:128px}                      /* 不分科目时：一个大输入框，占满整块 */
-.record textarea::placeholder{color:var(--ink-3);opacity:.8}
-.record textarea:focus{outline:none;border-bottom-color:var(--pen);background-image:linear-gradient(to bottom,transparent 31px,var(--rule) 31px)}
-/* 分科目时：每一门一小块 */
-.subject{margin-top:8px;flex-shrink:0}
-.subject:first-child{margin-top:2px}
-.subject-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.subject-head label{font-size:15px;font-weight:700;color:var(--pen)}
-.subject-count{font-family:var(--font-num);font-size:14px;color:var(--ink-3)}
-.subject-count.met{color:var(--done);font-weight:700}             /* 达到打算记的个数：变绿 */
+.sbox textarea::placeholder{color:var(--ink-3);opacity:.8}
+.sbox textarea:focus{outline:none;background-image:linear-gradient(to bottom,transparent 31px,var(--rule) 31px)}
+/* ----- 坚持项的框：左边一道荧光笔，和科目框区分开 ----- */
+.hbox{border:1px solid var(--rule);border-left:5px solid var(--hl);border-radius:var(--radius);padding:6px 10px 6px 9px;margin-bottom:8px;-webkit-user-select:none;user-select:none}   /* 不让双击时选中文字 */
+.hbox .box-name{color:var(--ink)}
+.hbox.off{border-left-color:var(--rule);background:var(--rule-soft)}        /* 停止了：整个框变灰 */
+.hbox.off .box-name{color:var(--ink-3)}
+/* ON/OFF 开关 */
+.switch{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 4px 0 9px;border:1px solid var(--rule);border-radius:13px;background:transparent;color:var(--ink-3);font-family:var(--font-num);font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;flex-shrink:0}
+.switch-knob{width:16px;height:16px;border-radius:50%;background:var(--ink-3)}
+.switch.on{flex-direction:row-reverse;padding:0 9px 0 4px;background:var(--pen);border-color:var(--pen);color:var(--on-pen)}   /* ON：圆钮在左，整个变蓝 */
+.switch.on .switch-knob{background:var(--on-pen)}
+/* 打卡那一行 */
+.habit-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;flex-wrap:wrap}
+.habit-check{display:inline-flex;align-items:center;gap:9px;min-height:34px;padding:2px 4px 2px 0;border:0;background:transparent;color:var(--ink);font-family:inherit;font-size:15px;cursor:pointer}
+.habit-check:hover:not(:disabled) .box{border-color:var(--pen)}
+.habit-check:disabled{cursor:not-allowed;color:var(--ink-3)}
+.habit-check:disabled .box{opacity:.45}
+.habit-check.is-done{color:var(--done);font-weight:700}
+.habit-stat{font-size:13px;color:var(--ink-3)}
+.habit-hint{font-size:12px;color:var(--ink-3);opacity:.8;text-align:right;line-height:1.4;margin-top:2px}
+.habit-add{margin-top:8px}
+
+/* 加号按钮：新建一个科目框 */
+.box-add{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:40px;border:1px dashed var(--rule);border-radius:var(--radius);background:transparent;color:var(--ink-2);font-size:14px;cursor:pointer}
+.box-add:hover{border-color:var(--pen);color:var(--pen);background:var(--pen-wash)}
+.box-limit{font-size:13px;color:var(--ink-3);text-align:center;padding:6px 0}
 .add-row{display:flex;align-items:center;gap:12px;margin-top:10px;flex-shrink:0}
 .add-btn{font-size:16px;padding:8px 20px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .kbd-hint{font-size:13px;color:var(--ink-3);white-space:nowrap}
-.add-row .link-btn{margin-left:auto}
 @media (hover:none){ .kbd-hint{display:none} }     /* 手机没有键盘，不显示快捷键提示 */
 
 /* ----- 复习强度图 ----- */
-.load-plot{flex:1;min-height:0;margin-top:8px}
+.chart-tools{display:flex;gap:4px}
+.mini-btn{min-width:28px;height:26px;padding:0 7px;border:1px solid var(--rule);border-radius:var(--radius);background:transparent;color:var(--ink-2);font-size:13px;font-weight:400;cursor:pointer;line-height:1}
+.mini-btn:hover{border-color:var(--pen);color:var(--pen)}
+.load-stat{font-size:13px;color:var(--ink-2);line-height:1.5;margin-top:6px;flex-shrink:0;min-height:39px}
+/* 放图的地方。touch-action:pan-y 让手机上竖着划还是滚动页面，横着划是移动图 */
+.load-plot{flex:1 0 190px;min-height:190px;margin-top:2px;cursor:grab;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.load-plot:active{cursor:grabbing}
 .load-plot svg{display:block}
-.load-note{font-size:12px;color:var(--ink-3);line-height:1.5;margin-top:4px;flex-shrink:0}
+.load-note{font-size:12px;color:var(--ink-3);line-height:1.55;margin-top:6px;flex-shrink:0}
 .l-grid{stroke:var(--rule-soft);stroke-width:1}
 .l-ylab{font-family:var(--font-num);font-size:12px;fill:var(--ink-3)}
 .l-xlab{font-family:var(--font-num);font-size:12.5px;fill:var(--ink-3)}
-.l-today{fill:var(--hl);opacity:.55}
+.l-val{font-family:var(--font-num);font-size:12px;fill:var(--ink-2)}
+.l-today{fill:var(--hl);opacity:.5}
 .l-sel{stroke:var(--pen);stroke-width:1.5;stroke-dasharray:3 3}
-.l-area{fill:var(--pen-wash)}
-.l-line{fill:none;stroke:var(--pen);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
-.l-dot{stroke:var(--sheet);stroke-width:1.5}
-.l-dot.due{fill:var(--due-dot)}
-.l-dot.done{fill:var(--done)}
-.l-dot.late{fill:var(--late)}
-.l-hit{fill:transparent;cursor:pointer}
-.l-hit:hover{fill:var(--pen-wash)}
+/* 柱子：颜色和日历圆点一致 */
+.l-bar.done{fill:var(--done)}
+.l-bar.due{fill:var(--due-dot)}
+.l-bar.late{fill:var(--late)}
+.l-bar{opacity:.78}
+.l-zero.due{fill:var(--due-dot)}
+.l-zero.late{fill:var(--late)}
+/* 连接柱子顶的曲线（粗细由 app.js 按缩放程度设置） */
+.l-line{fill:none;stroke:var(--pen);stroke-linejoin:round;stroke-linecap:round}
 
 /* ----- 第二排：需要复习 / 这一天学的 ----- */
-.block{padding:12px 16px 12px;display:flex;flex-direction:column;min-height:0;
-  max-height:max(230px,calc(100vh - 562px))}      /* 屏幕高就多显示一些；内容再多，就在块里面滚动 */
-.scroll{overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch}
+.block{padding:12px 16px 12px}                    /* 不限制高度：内容多少，这一块就多高，页面跟着变长 */
 .block-note{font-size:14px;margin-top:8px}
 .block-note.late{color:var(--late)}
 .empty{color:var(--ink-3);font-size:14px;padding:10px 0 4px}
@@ -150,8 +191,8 @@
 .box{width:22px;height:22px;border:2px solid var(--ink-3);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .check-item.is-late .box{border-color:var(--late)}
 .check-item.is-late .item-meta{color:var(--late)}
-.check-item.is-done .box{background:var(--done);border-color:var(--done)}
-.check-item.is-done .box::after{content:"";width:10px;height:5px;border-left:2.5px solid var(--sheet);border-bottom:2.5px solid var(--sheet);transform:translateY(-1.5px) rotate(-45deg)}   /* 用两条边拼出一个勾 */
+.check-item.is-done .box,.habit-check.is-done .box{background:var(--done);border-color:var(--done)}
+.check-item.is-done .box::after,.habit-check.is-done .box::after{content:"";width:10px;height:5px;border-left:2.5px solid var(--sheet);border-bottom:2.5px solid var(--sheet);transform:translateY(-1.5px) rotate(-45deg)}   /* 用两条边拼出一个勾 */
 .check-item.is-done .item-text{text-decoration:line-through;color:var(--ink-3)}
 
 /* 学习内容那一行：右边有六个进度点和删除按钮 */
@@ -198,6 +239,12 @@
 .dialog-text{font-size:14px;color:var(--ink-2);margin-top:8px}
 .dialog-foot{padding:12px 20px 16px;border-top:1px solid var(--rule)}
 .dialog-foot .btn{width:100%;font-size:16px;padding:10px 0}
+/* “再次询问”弹窗：两个按钮并排 */
+.dialog-foot.two{display:flex;gap:10px}
+.dialog-foot.two .btn{flex:1}
+.btn.danger{background:var(--late);border-color:var(--late);color:var(--sheet)}
+.btn.danger:hover{background:var(--late);border-color:var(--late);color:var(--sheet);filter:brightness(.92)}
+.confirm-text{font-size:17px;font-weight:700}
 .streak-line{font-size:15px;color:var(--ink-2);margin-bottom:12px}
 .streak-line b{font-family:var(--font-num);font-size:20px;color:var(--ink);box-shadow:inset 0 calc(-1 * var(--hl-band)) 0 var(--hl);padding:0 3px}
 .summary-nums{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--rule)}
@@ -208,22 +255,12 @@
 .summary-nums .late b{color:var(--late)}
 .summary-nums span{font-size:13px;color:var(--ink-3)}
 
-/* 设置弹窗里的一行：左边说明，右边按钮 */
+/* 备份弹窗里的一行：左边说明，右边按钮 */
 .set-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule-soft)}
 .set-row > div{flex:1;min-width:0}
 .set-row strong{font-size:16px}
 .set-row p{font-size:13px;color:var(--ink-3);line-height:1.6}
 .set-row .btn{font-size:15px;padding:8px 18px;white-space:nowrap}
-.set-label{font-size:13px;color:var(--ink-3);white-space:nowrap}
-.subject-row input{flex:1;min-width:0;height:36px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--radius);background:transparent;color:var(--ink);font-family:inherit;font-size:16px}
-.subject-row input:focus{outline:none;border-color:var(--pen)}
-.subject-row input::placeholder{color:var(--ink-3);opacity:.8;font-size:14px}
-/* 加减按钮 */
-.stepper{display:inline-flex;align-items:center;border:1px solid var(--rule);border-radius:var(--radius);flex-shrink:0}
-.stepper button{width:34px;height:34px;border:0;background:transparent;color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center}
-.stepper button:hover:not(:disabled){color:var(--pen);background:var(--pen-wash)}
-.stepper button:disabled{opacity:.3;cursor:not-allowed}
-.stepper b{min-width:30px;text-align:center;font-family:var(--font-num);font-weight:400;font-size:18px}
 .file-input{display:none}
 .data-msg{margin-top:14px;padding:10px 12px;font-size:14px;border-left:5px solid var(--hl);background:var(--pen-wash);border-radius:0 var(--radius) var(--radius) 0}
 
@@ -235,7 +272,7 @@
 /* ----- 窄一点的屏幕（平板、小窗口）：日历和记录并排，图表单独一行 ----- */
 @media(max-width:1080px){
   .row1{grid-template-columns:348px minmax(0,1fr)}
-  .load{grid-column:1 / -1;height:250px}
+  .load{grid-column:1 / -1;height:340px}
 }
 
 /* ----- 手机：全部排成一列。顺序：日历 → 需要复习 → 记录 → 这一天学的 → 复习强度图 ----- */
@@ -246,12 +283,13 @@
   .block.reviews{order:2}
   .record{order:3}
   .block.learned{order:4}
-  .load{order:5;height:240px}
-  .record .fill{position:static;padding:12px 14px 14px}     /* 手机上记录块按内容自己的高度来 */
-  .record-body{overflow:visible}
-  .record textarea.big{min-height:160px;flex:none}
-  .block{max-height:none;padding:12px 14px}     /* 手机上不在块里面滚动，直接跟着页面滚 */
-  .scroll{overflow:visible}
+  .load{order:5;height:auto}
+  .load .fill{position:static;padding:12px 14px 14px;overflow:visible}
+  .load-plot{flex:none;height:230px}
+  .cal{overflow:visible}
+  .record .fill{position:static;padding:12px 14px 14px}     /* 手机上三栏都按内容自己的高度来，跟着页面滚 */
+  .record-body{overflow:visible;margin:8px 0 0;padding:0}
+  .block{padding:12px 14px}
   .cal-day{height:42px}
   .strip-inner{padding:10px 12px}
   .strip h1{font-size:24px}

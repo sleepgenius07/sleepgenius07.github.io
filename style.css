@@ -166,7 +166,11 @@ button{font-family:inherit;color:inherit}
 .page-lead{font-size:18px;color:var(--ink-2);margin-bottom:8px}
 .container h2{font-family:var(--font-kai);font-size:26px;font-weight:400;line-height:1.35;margin:44px 0 12px;padding-top:20px;border-top:1px solid var(--rule)}
 .container h3{font-size:17px;font-weight:700;margin:22px 0 6px}
-.container p{margin-bottom:12px}
+/* 正文段落按中文书写习惯，首行缩进两个字（2em 就是两个字的宽度） */
+.container p{margin-bottom:12px;text-indent:2em}
+/* 不是正文的几种不缩进：版本号、“最后更新”这类小字、只放一个按钮的段落 */
+.container .version,.container .muted,.container .no-indent{text-indent:0}
+.version{display:inline-block;font-family:var(--font-num);font-size:15px;color:var(--ink-2);padding:1px 10px;border:1px solid var(--rule);border-radius:var(--radius);margin-bottom:12px}
 .container ul,.container ol{margin:0 0 14px 1.4em}
 .container li{margin-bottom:7px}
 .muted{color:var(--ink-3);font-size:14px}
@@ -209,7 +213,15 @@ button{font-family:inherit;color:inherit}
 .seg button:first-child{border-left:0}
 .seg button:hover{color:var(--pen)}
 .seg button[aria-checked="true"]{background:var(--pen);color:var(--on-pen);font-weight:700}
-.theme-row{display:flex;align-items:center;gap:10px}
+/* 导航栏里的那一个：和“首页”等链接排在同一行的最右边 */
+.nav .seg{margin-left:10px;flex-shrink:0}
+.nav .seg button{font-size:13px;padding:4px 10px}
+/* 屏幕窄的时候放不下三个按钮：只显示当前选中的那一个，点它就换到下一种（theme.js 负责轮换） */
+@media(max-width:900px){
+  .nav .seg{margin-left:4px}
+  .nav .seg button{border-left:0}
+  .nav .seg button:not([aria-checked="true"]){display:none}
+}
 
 @media(max-width:600px){
   .container{padding:30px 16px 48px}
