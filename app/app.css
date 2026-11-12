@@ -1,8 +1,14 @@
 /* ===== 应用专用样式 =====
    颜色变量、字体、导航栏、按钮在根目录的 ../style.css，
-   这里只放日历、清单、弹窗这些“应用本身”才用到的样式。 */
+   这里只放日历、清单、图表、弹窗这些“应用本身”才用到的样式。
+
+   版面（电脑上）：
+     顶部一行   今天的日期和进度 ………………………… 逾期 / 今日摘要 / 设置
+     第一排     日历 | 记录 | 复习强度图      ← 三块一样高，高度由日历决定
+     第二排     需要复习 | 这一天学的         ← 内容多了在块里面滚动，页面本身不变长 */
 
 .app{width:100%}
+.app-page .nav-inner{max-width:1280px}      /* 应用页比其他页面宽，导航栏也跟着放宽，左右对齐 */
 
 /* 一张“纸”：所有面板的底 */
 .sheet{background:var(--sheet);border:1px solid var(--rule);border-radius:var(--radius)}
@@ -10,100 +16,133 @@
 /* 圆点（日历、图例共用；颜色在 style.css 的 .dot.learned 等处定义） */
 .dot{width:7px;height:7px}
 
-/* ----- 顶部：今天的情况 ----- */
-.strip{border-bottom:1px solid var(--rule)}
-.strip-inner{max-width:1120px;margin:0 auto;padding:18px 20px 16px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px 28px;flex-wrap:wrap}
-.strip-main{flex:1 1 320px;min-width:0}
-.strip h1{font-family:var(--font-kai);font-weight:400;font-size:34px;line-height:1.2}
-.strip h1 small{font-family:var(--font-body);font-size:15px;color:var(--ink-3);margin-left:10px}
-.strip-line{color:var(--ink-2);font-size:16px;margin-top:2px}
-.progress{height:6px;max-width:360px;margin-top:8px;border-radius:3px;background:var(--rule-soft);overflow:hidden}
-.progress-fill{height:100%;background:var(--due-dot);border-radius:3px;transition:width .25s ease}
+/* ----- 顶部一行：今天的情况 ----- */
+.strip{border-bottom:1px solid var(--rule);position:relative}
+.strip-inner{max-width:1280px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:8px 24px;flex-wrap:wrap}
+.strip-main{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 18px;min-width:0}
+.strip h1{font-family:var(--font-kai);font-weight:400;font-size:28px;line-height:1.3;white-space:nowrap}
+.strip h1 small{font-family:var(--font-body);font-size:14px;color:var(--ink-3);margin-left:8px}
+.strip-line{color:var(--ink-2);font-size:15px}
+/* 今日进度：贴着这一栏下边的一条细线 */
+.progress{position:absolute;left:0;right:0;bottom:-2px;height:3px;background:transparent}
+.progress-fill{height:100%;background:var(--due-dot);transition:width .25s ease}
 .progress-fill.full{background:var(--done)}
 .strip-side{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.streak{font-size:15px;color:var(--ink-2);margin-right:6px;box-shadow:inset 0 -7px 0 var(--hl);padding:0 2px}   /* 下面一道荧光笔 */
-.streak b{font-family:var(--font-num);font-size:20px;color:var(--ink)}
-@media (prefers-color-scheme:dark){ .streak{box-shadow:inset 0 -3px 0 var(--hl)} }
+.streak{font-size:15px;color:var(--ink-2);margin-right:6px;box-shadow:inset 0 calc(-1 * var(--hl-band)) 0 var(--hl);padding:0 2px}   /* 下面一道荧光笔 */
+.streak b{font-family:var(--font-num);font-size:19px;color:var(--ink)}
 
 /* 小按钮 */
-.chip{padding:6px 14px;border-radius:var(--radius);border:1px solid var(--rule);background:var(--sheet);font-size:15px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.chip{padding:5px 14px;border-radius:var(--radius);border:1px solid var(--rule);background:var(--sheet);font-size:15px;color:var(--ink);cursor:pointer;white-space:nowrap}
 .chip:hover{border-color:var(--pen);color:var(--pen)}
 .chip.late{border-color:var(--late);color:var(--late);background:var(--late-wash)}
-.link-btn{border:0;background:none;color:var(--pen);font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px 2px}
+.link-btn{border:0;background:none;color:var(--pen);font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px 2px;white-space:nowrap}
+.icon{display:flex}
 
-/* ----- 主体：左日历、右内容 ----- */
-.workspace{display:grid;grid-template-columns:372px minmax(0,1fr);gap:24px;max-width:1120px;margin:0 auto;padding:20px 20px 72px;align-items:start}
-.side{display:flex;flex-direction:column;gap:14px;position:sticky;top:calc(var(--nav-h) + 14px)}   /* 右边内容很长时，日历留在原地 */
-.day{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* ----- 主体 ----- */
+.workspace{max-width:1280px;margin:0 auto;padding:16px 20px 24px;display:flex;flex-direction:column;gap:14px}
+.row1{display:grid;grid-template-columns:348px minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+
+/* “记录”和“复习强度图”自己不撑高度：里面的 .fill 用绝对定位铺满，
+   所以第一排的高度完全由日历决定，三块自然一样高 */
+.record,.load{position:relative;min-height:0}
+.fill{position:absolute;inset:0;display:flex;flex-direction:column;padding:12px 16px 14px;min-height:0}
+
+/* 每一块最上面的标题行：下面一道粗线 */
+.block-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:7px;border-bottom:2px solid var(--ink);flex-shrink:0}
+.block-head h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.block-head .count{font-size:13px;color:var(--ink-3);white-space:nowrap}
+.tag{font-size:12px;font-weight:400;padding:0 8px;border-radius:3px;border:1px solid var(--rule);color:var(--ink-2);line-height:1.7}
+.tag.now{background:var(--hl);border-color:var(--hl);color:var(--on-hl);font-weight:700}
 
 /* ----- 日历 ----- */
-.cal{padding:14px 14px 12px}
-.cal-nav{display:flex;align-items:center;gap:6px;margin-bottom:10px}
-.cal-nav h2{flex:1;font-size:15px;font-weight:400;color:var(--ink-3)}
-.cal-nav h2 b{font-family:var(--font-kai);font-weight:400;font-size:26px;color:var(--ink);margin-left:6px}
-.cal-today,.cal-arrow{height:34px;border-radius:var(--radius);border:1px solid var(--rule);background:transparent;color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cal{padding:12px 12px 10px}
+.cal-nav{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.cal-nav h2{flex:1;font-size:14px;font-weight:400;color:var(--ink-3)}
+.cal-nav h2 b{font-family:var(--font-kai);font-weight:400;font-size:24px;color:var(--ink);margin-left:6px}
+.cal-today,.cal-arrow{height:32px;border-radius:var(--radius);border:1px solid var(--rule);background:transparent;color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center}
 .cal-today{padding:0 12px;font-size:14px;white-space:nowrap}
-.cal-arrow{width:34px}
+.cal-arrow{width:32px}
 .cal-today:hover,.cal-arrow:hover{border-color:var(--pen);color:var(--pen)}
-.icon{display:flex}
-.cal-week{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--rule);padding-bottom:4px;margin-bottom:4px}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--rule);padding-bottom:3px;margin-bottom:3px}
 .cal-week span{text-align:center;font-size:13px;color:var(--ink-3)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-day{aspect-ratio:1;min-height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:var(--radius);background:transparent;color:var(--ink);cursor:pointer;-webkit-user-select:none;user-select:none}
+.cal-day{height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;border-radius:var(--radius);background:transparent;color:var(--ink);cursor:pointer;-webkit-user-select:none;user-select:none}
 .cal-day:hover{background:var(--pen-wash)}
-.cal-num{font-family:var(--font-num);font-size:17px;line-height:1.2;padding:0 5px;border-radius:3px}
+.cal-num{font-family:var(--font-num);font-size:16px;line-height:1.2;padding:0 5px;border-radius:3px}
 .cal-dots{display:flex;gap:3px;height:7px}
 .cal-day.outside{opacity:.32}
 /* 今天：数字上涂一道荧光笔 */
 .cal-day.today .cal-num{background:var(--hl);color:var(--on-hl);font-weight:700}
 /* 选中的那一天：整格涂成圆珠笔蓝 */
 .cal-day.selected{background:var(--pen);color:var(--on-pen);opacity:1}
-.cal-day.selected .dot{box-shadow:0 0 0 1.5px var(--on-pen)}        /* 蓝底上给圆点加一圈白边，看得清 */
-.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--rule-soft);font-size:13px;color:var(--ink-2)}
+.cal-day.selected .dot{box-shadow:0 0 0 1.5px var(--on-pen)}        /* 蓝底上给圆点加一圈边，看得清 */
+.legend{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--rule-soft);font-size:13px;color:var(--ink-2)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 
-/* ----- 累计 ----- */
-.totals{display:grid;grid-template-columns:repeat(3,1fr)}
-.totals div{padding:10px 8px;text-align:center;border-left:1px solid var(--rule-soft)}
-.totals div:first-child{border-left:0}
-.totals b{display:block;font-family:var(--font-num);font-weight:400;font-size:26px;line-height:1.2;color:var(--pen)}
-.totals span{font-size:13px;color:var(--ink-3)}
+/* ----- 记录 ----- */
+.record-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;margin-top:6px}
+/* 输入框：背景画着横线，一行就是一个知识点。字号 16px（小于 16px 时 iPhone 会自动放大页面） */
+.record textarea{
+  display:block;width:100%;padding:0 2px;
+  border:0;border-bottom:1px solid var(--rule);border-radius:0;resize:none;
+  font-family:inherit;font-size:16px;line-height:32px;color:var(--ink);
+  background-color:transparent;
+  background-image:linear-gradient(to bottom,transparent 31px,var(--rule-soft) 31px);
+  background-size:100% 32px;background-attachment:local;
+}
+.record textarea.big{flex:1;min-height:128px}                      /* 不分科目时：一个大输入框，占满整块 */
+.record textarea::placeholder{color:var(--ink-3);opacity:.8}
+.record textarea:focus{outline:none;border-bottom-color:var(--pen);background-image:linear-gradient(to bottom,transparent 31px,var(--rule) 31px)}
+/* 分科目时：每一门一小块 */
+.subject{margin-top:8px;flex-shrink:0}
+.subject:first-child{margin-top:2px}
+.subject-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.subject-head label{font-size:15px;font-weight:700;color:var(--pen)}
+.subject-count{font-family:var(--font-num);font-size:14px;color:var(--ink-3)}
+.subject-count.met{color:var(--done);font-weight:700}             /* 达到打算记的个数：变绿 */
+.add-row{display:flex;align-items:center;gap:12px;margin-top:10px;flex-shrink:0}
+.add-btn{font-size:16px;padding:8px 20px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.kbd-hint{font-size:13px;color:var(--ink-3);white-space:nowrap}
+.add-row .link-btn{margin-left:auto}
+@media (hover:none){ .kbd-hint{display:none} }     /* 手机没有键盘，不显示快捷键提示 */
 
-/* ----- 记忆曲线小图 ----- */
-.curve-card{padding:14px 14px 8px}
-.curve-card h3{font-size:15px;font-weight:700}
-.curve-card p{font-size:13px;color:var(--ink-3);line-height:1.6;margin-bottom:4px}
-.curve-card svg{display:block;width:100%;height:auto}
-.c-grid{stroke:var(--rule);stroke-width:1}
-.c-saw{fill:none;stroke:var(--pen);stroke-width:2;stroke-linejoin:round}
-.c-fading{fill:none;stroke:var(--ink-3);stroke-width:1.5;stroke-dasharray:3 4;opacity:.75}
-.c-day{font-family:var(--font-num);font-size:12px;fill:var(--pen)}
-.c-lab-saw{font-size:12px;font-weight:700;fill:var(--pen)}
-.c-lab-fading{font-size:12px;fill:var(--ink-3)}
+/* ----- 复习强度图 ----- */
+.load-plot{flex:1;min-height:0;margin-top:8px}
+.load-plot svg{display:block}
+.load-note{font-size:12px;color:var(--ink-3);line-height:1.5;margin-top:4px;flex-shrink:0}
+.l-grid{stroke:var(--rule-soft);stroke-width:1}
+.l-ylab{font-family:var(--font-num);font-size:12px;fill:var(--ink-3)}
+.l-xlab{font-family:var(--font-num);font-size:12.5px;fill:var(--ink-3)}
+.l-today{fill:var(--hl);opacity:.55}
+.l-sel{stroke:var(--pen);stroke-width:1.5;stroke-dasharray:3 3}
+.l-area{fill:var(--pen-wash)}
+.l-line{fill:none;stroke:var(--pen);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.l-dot{stroke:var(--sheet);stroke-width:1.5}
+.l-dot.due{fill:var(--due-dot)}
+.l-dot.done{fill:var(--done)}
+.l-dot.late{fill:var(--late)}
+.l-hit{fill:transparent;cursor:pointer}
+.l-hit:hover{fill:var(--pen-wash)}
 
-/* ----- 右边：选中的这一天 ----- */
-.day-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:34px}
-.day-head h2{font-size:21px;font-weight:700}
-.day-head h2 small{font-size:14px;font-weight:400;color:var(--ink-3);margin-left:8px}
-.tag{font-size:13px;padding:1px 9px;border-radius:3px;border:1px solid var(--rule);color:var(--ink-2)}
-.tag.now{background:var(--hl);border-color:var(--hl);color:var(--on-hl);font-weight:700}
-
-.block{padding:14px 18px 16px}
-.block-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:2px solid var(--ink)}
-.block-head h3{font-size:17px;font-weight:700}
-.block-head .count{font-size:13px;color:var(--ink-3);white-space:nowrap}
-.block-note{font-size:14px;margin-top:10px}
+/* ----- 第二排：需要复习 / 这一天学的 ----- */
+.block{padding:12px 16px 12px;display:flex;flex-direction:column;min-height:0;
+  max-height:max(230px,calc(100vh - 562px))}      /* 屏幕高就多显示一些；内容再多，就在块里面滚动 */
+.scroll{overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch}
+.block-note{font-size:14px;margin-top:8px}
 .block-note.late{color:var(--late)}
+.empty{color:var(--ink-3);font-size:14px;padding:10px 0 4px}
 
 /* 一组复习内容的小标题 */
-.group-head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;margin-top:14px;font-size:13px;color:var(--ink-3)}
+.group-head{display:flex;align-items:center;flex-wrap:wrap;gap:2px 12px;margin-top:10px;font-size:13px;color:var(--ink-3)}
 .group-head .round{color:var(--pen)}
 /* 保持率：一小段墨迹，记得越少墨色越淡 */
 .keep{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
 .keep-ink{display:inline-block;width:26px;height:5px;border-radius:3px;background:var(--ink)}
 
 /* 清单里的一行：下面一道横线，像写在横线本上 */
-.item{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:8px 0;border:0;border-bottom:1px solid var(--rule-soft);background:transparent;text-align:left;font-size:16px;line-height:1.6;color:var(--ink)}
+.item{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;padding:6px 0;border:0;border-bottom:1px solid var(--rule-soft);background:transparent;text-align:left;font-size:16px;line-height:1.6;color:var(--ink)}
 .item-text{flex:1;min-width:0;overflow-wrap:anywhere}
 .item-meta{font-size:13px;color:var(--ink-3);white-space:nowrap}
 .check-item{cursor:pointer}
@@ -122,14 +161,14 @@
 .pip.done{background:var(--done);border-color:var(--done)}
 .pip.due{background:var(--due-dot);border-color:var(--due-dot)}
 .pip.late{border-color:var(--late)}
-.del-btn{width:34px;height:34px;margin-right:-8px;border:0;border-radius:var(--radius);background:transparent;color:var(--ink-3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.del-btn{width:34px;height:34px;margin-right:-6px;border:0;border-radius:var(--radius);background:transparent;color:var(--ink-3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .del-btn:hover{color:var(--late);background:var(--late-wash)}
 
 /* 复习安排 */
-.plan-label{font-size:13px;color:var(--ink-3);margin:14px 0 6px}
-.plan{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.plan-chip{display:flex;flex-direction:column;align-items:center;padding:6px 2px 5px;border:1px solid var(--rule);border-radius:var(--radius);background:transparent;cursor:pointer;color:var(--ink);min-width:0}
-.plan-chip b{font-family:var(--font-num);font-weight:400;font-size:17px;line-height:1.3}
+.plan-label{font-size:13px;color:var(--ink-3);margin:10px 0 6px}
+.plan{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding-bottom:2px}
+.plan-chip{display:flex;flex-direction:column;align-items:center;padding:4px 2px 3px;border:1px solid var(--rule);border-radius:var(--radius);background:transparent;cursor:pointer;color:var(--ink);min-width:0}
+.plan-chip b{font-family:var(--font-num);font-weight:400;font-size:16px;line-height:1.3}
 .plan-chip span{font-size:12px;color:var(--ink-3);white-space:nowrap}
 .plan-chip:hover{border-color:var(--pen)}
 .plan-chip.done{border-color:var(--done);background:var(--done-wash)}
@@ -139,44 +178,28 @@
 .plan-chip.late{border-color:var(--late);background:var(--late-wash)}
 .plan-chip.late b{color:var(--late)}
 
-/* 输入框：背景画着横线，一行就是一个知识点。字号 16px（小于 16px 时 iPhone 会自动放大页面） */
-.block textarea{
-  display:block;width:100%;min-height:96px;margin-top:8px;padding:0 2px;
-  border:0;border-bottom:1px solid var(--rule);border-radius:0;resize:vertical;
-  font-family:inherit;font-size:16px;line-height:32px;color:var(--ink);
-  background-color:transparent;
-  background-image:linear-gradient(to bottom,transparent 31px,var(--rule-soft) 31px);
-  background-size:100% 32px;background-attachment:local;
-}
-.block textarea::placeholder{color:var(--ink-3);opacity:.8}
-.block textarea:focus{outline:none;border-bottom-color:var(--pen);background-image:linear-gradient(to bottom,transparent 31px,var(--rule) 31px)}
-.add-row{display:flex;align-items:center;gap:14px;margin-top:12px}
-.add-btn{font-size:16px;padding:9px 22px}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.kbd-hint{font-size:13px;color:var(--ink-3)}
-@media (hover:none),(max-width:600px){ .kbd-hint{display:none} }     /* 手机没有键盘，不显示快捷键提示 */
-
-.empty{color:var(--ink-3);font-size:15px;padding:6px 2px}
-
 /* ----- 弹窗 ----- */
-.overlay{position:fixed;inset:0;z-index:100;background:rgba(18,23,31,.55);display:flex;align-items:center;justify-content:center;padding:16px;animation:overlayIn .18s ease}
-.dialog{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;width:100%;max-width:480px;max-height:min(86vh,720px);display:flex;flex-direction:column;animation:dialogIn .22s cubic-bezier(.2,.8,.3,1)}
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(18,23,31,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+/* 只有刚打开的那一下播放动画（.fresh）；在弹窗里打勾、点加减号时界面会重画，那时不再闪一下 */
+.overlay.fresh{animation:overlayIn .18s ease}
+.dialog{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;width:100%;max-width:500px;max-height:min(88vh,740px);display:flex;flex-direction:column}
+.overlay.fresh .dialog{animation:dialogIn .22s cubic-bezier(.2,.8,.3,1)}
 @keyframes overlayIn{from{opacity:0}to{opacity:1}}
 @keyframes dialogIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-.dialog-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px 12px;border-bottom:1px solid var(--rule)}
+.dialog-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 20px 12px;border-bottom:1px solid var(--rule)}
 .dialog-head h2{font-family:var(--font-kai);font-weight:400;font-size:26px;line-height:1.25}
 .dialog-head p{font-size:13px;color:var(--ink-3)}
 .dialog-close{width:36px;height:36px;border:1px solid var(--rule);border-radius:var(--radius);background:transparent;color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .dialog-close:hover{border-color:var(--pen);color:var(--pen)}
 .dialog-body{padding:14px 20px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dialog-body h3{font-size:16px;font-weight:700;margin-top:18px;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+.dialog-body h3:first-child{margin-top:0}
 .dialog-body h3.late{color:var(--late);border-bottom-color:var(--late)}
 .dialog-text{font-size:14px;color:var(--ink-2);margin-top:8px}
 .dialog-foot{padding:12px 20px 16px;border-top:1px solid var(--rule)}
 .dialog-foot .btn{width:100%;font-size:16px;padding:10px 0}
 .streak-line{font-size:15px;color:var(--ink-2);margin-bottom:12px}
-.streak-line b{font-family:var(--font-num);font-size:20px;color:var(--ink);box-shadow:inset 0 -6px 0 var(--hl);padding:0 3px}
-@media (prefers-color-scheme:dark){ .streak-line b{box-shadow:inset 0 -3px 0 var(--hl)} }
+.streak-line b{font-family:var(--font-num);font-size:20px;color:var(--ink);box-shadow:inset 0 calc(-1 * var(--hl-band)) 0 var(--hl);padding:0 3px}
 .summary-nums{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--rule)}
 .summary-nums div{text-align:center;padding:10px 4px;border-left:1px solid var(--rule-soft)}
 .summary-nums div:first-child{border-left:0}
@@ -185,34 +208,57 @@
 .summary-nums .late b{color:var(--late)}
 .summary-nums span{font-size:13px;color:var(--ink-3)}
 
-/* 备份弹窗 */
-.data-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule-soft)}
-.data-row div{flex:1;min-width:0}
-.data-row h3{margin:0;padding:0;border:0;font-size:16px}
-.data-row p{font-size:13px;color:var(--ink-3);line-height:1.6}
-.data-row .btn{font-size:15px;padding:8px 18px;white-space:nowrap}
+/* 设置弹窗里的一行：左边说明，右边按钮 */
+.set-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule-soft)}
+.set-row > div{flex:1;min-width:0}
+.set-row strong{font-size:16px}
+.set-row p{font-size:13px;color:var(--ink-3);line-height:1.6}
+.set-row .btn{font-size:15px;padding:8px 18px;white-space:nowrap}
+.set-label{font-size:13px;color:var(--ink-3);white-space:nowrap}
+.subject-row input{flex:1;min-width:0;height:36px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--radius);background:transparent;color:var(--ink);font-family:inherit;font-size:16px}
+.subject-row input:focus{outline:none;border-color:var(--pen)}
+.subject-row input::placeholder{color:var(--ink-3);opacity:.8;font-size:14px}
+/* 加减按钮 */
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--rule);border-radius:var(--radius);flex-shrink:0}
+.stepper button{width:34px;height:34px;border:0;background:transparent;color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.stepper button:hover:not(:disabled){color:var(--pen);background:var(--pen-wash)}
+.stepper button:disabled{opacity:.3;cursor:not-allowed}
+.stepper b{min-width:30px;text-align:center;font-family:var(--font-num);font-weight:400;font-size:18px}
 .file-input{display:none}
 .data-msg{margin-top:14px;padding:10px 12px;font-size:14px;border-left:5px solid var(--hl);background:var(--pen-wash);border-radius:0 var(--radius) var(--radius) 0}
 
 /* 底部提示条（删除后可撤销） */
-.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:120;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 24px);padding:10px 12px 10px 16px;border-radius:var(--radius);background:var(--ink);color:var(--paper);font-size:15px;animation:dialogInToast .2s ease}
-@keyframes dialogInToast{from{opacity:0}to{opacity:1}}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:120;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 24px);padding:10px 12px 10px 16px;border-radius:var(--radius);background:var(--ink);color:var(--paper);font-size:15px;animation:overlayIn .2s ease}
 .toast span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .toast button{border:0;background:var(--hl);color:var(--on-hl);font-weight:700;font-size:14px;padding:4px 12px;border-radius:4px;cursor:pointer;flex-shrink:0}
 
-/* ----- 手机 ----- */
-@media(max-width:860px){
-  .workspace{grid-template-columns:1fr;gap:14px;padding:14px 12px 64px}
-  .side{position:static;display:contents}       /* 手机上拆开左栏：日历排最上面，累计和曲线图排到最下面 */
-  .cal{order:0}
-  .day{order:1}
-  .totals{order:2}
-  .curve-card{order:3}
-  .strip-inner{padding:14px 12px 12px}
-  .strip h1{font-size:28px}
-  .block{padding:12px 14px 14px}
+/* ----- 窄一点的屏幕（平板、小窗口）：日历和记录并排，图表单独一行 ----- */
+@media(max-width:1080px){
+  .row1{grid-template-columns:348px minmax(0,1fr)}
+  .load{grid-column:1 / -1;height:250px}
+}
+
+/* ----- 手机：全部排成一列。顺序：日历 → 需要复习 → 记录 → 这一天学的 → 复习强度图 ----- */
+@media(max-width:720px){
+  .workspace{padding:12px 12px 40px;gap:12px}
+  .row1,.row2{display:contents}                 /* 拆掉两排的外框，让五块可以自由排顺序 */
+  .cal{order:1}
+  .block.reviews{order:2}
+  .record{order:3}
+  .block.learned{order:4}
+  .load{order:5;height:240px}
+  .record .fill{position:static;padding:12px 14px 14px}     /* 手机上记录块按内容自己的高度来 */
+  .record-body{overflow:visible}
+  .record textarea.big{min-height:160px;flex:none}
+  .block{max-height:none;padding:12px 14px}     /* 手机上不在块里面滚动，直接跟着页面滚 */
+  .scroll{overflow:visible}
+  .cal-day{height:42px}
+  .strip-inner{padding:10px 12px}
+  .strip h1{font-size:24px}
+  .fill{padding:12px 14px}
+  .kbd-hint{display:none}
 }
 @media(max-width:420px){
   .plan{grid-template-columns:repeat(3,1fr)}
-  .chip{padding:6px 11px;font-size:14px}
+  .chip{padding:5px 11px;font-size:14px}
 }

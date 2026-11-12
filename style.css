@@ -10,7 +10,7 @@
    想换颜色，只改下面 :root 里的变量，全站一起变。 */
 
 :root{
-  color-scheme:light dark;          /* 告诉浏览器：这个网站同时支持日间和夜间 */
+  color-scheme:light;               /* 告诉浏览器现在是日间配色（滚动条、输入框等会跟着变） */
 
   /* 纸 */
   --paper:#eef2e6;                  /* 页面底色：护眼纸的淡绿 */
@@ -30,6 +30,7 @@
   --on-pen:#ffffff;                 /* 蓝色按钮上的字 */
   --hl:#ffe566;                     /* 荧光笔黄 */
   --on-hl:#1c2a4a;                  /* 荧光笔上面的字，永远用深色 */
+  --hl-band:7px;                    /* 文字下面那道荧光笔的粗细（夜间会细一点） */
 
   /* 状态色（日历圆点、清单）*/
   --done:#237a4b;                   /* 已完成：绿 */
@@ -50,9 +51,12 @@
   --nav-h:52px;
 }
 
-/* 夜间模式：手机/电脑开了深色模式时自动切换，像晚上台灯下的书桌 */
+/* 夜间模式的颜色，像晚上台灯下的书桌。下面两段内容一样，分别对应两种情况：
+   ① 设置是“跟随系统”，而且系统开了深色模式
+   ② 在设置里手动选了“夜间”（theme.js 会给 <html> 加上 data-theme="dark"）
+   手动选“日间”时 <html> 上是 data-theme="light"，两段都不生效，就用上面的日间颜色。 */
 @media (prefers-color-scheme:dark){
-  :root{
+  :root:not([data-theme="light"]){
     --paper:#12171f;
     --sheet:#1a212c;
     --rule:#343f50;
@@ -65,13 +69,37 @@
     --pen-wash:rgba(154,182,255,.12);
     --on-pen:#0f1830;
     --hl:#f0d23c;
+    --hl-band:3px;
     --done:#62c48e;
     --done-wash:rgba(98,196,142,.12);
     --due:#e6b550;
     --due-dot:#e6b550;
     --late:#f27d72;
     --late-wash:rgba(242,125,114,.12);
+    color-scheme:dark;
   }
+}
+:root[data-theme="dark"]{
+    --paper:#12171f;
+    --sheet:#1a212c;
+    --rule:#343f50;
+    --rule-soft:#262f3c;
+    --ink:#e7eadf;
+    --ink-2:#b7bfcd;
+    --ink-3:#939db0;
+    --pen:#9ab6ff;
+    --pen-deep:#bccdff;
+    --pen-wash:rgba(154,182,255,.12);
+    --on-pen:#0f1830;
+    --hl:#f0d23c;
+    --hl-band:3px;
+    --done:#62c48e;
+    --done-wash:rgba(98,196,142,.12);
+    --due:#e6b550;
+    --due-dot:#e6b550;
+    --late:#f27d72;
+    --late-wash:rgba(242,125,114,.12);
+    color-scheme:dark;
 }
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -174,6 +202,14 @@ button{font-family:inherit;color:inherit}
 .site-footer-inner{max-width:1120px;margin:0 auto;padding:0 20px;display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
 .site-footer nav{display:flex;flex-wrap:wrap;gap:4px 18px}
 .site-footer a{color:var(--ink-2)}
+
+/* 分段按钮（界面颜色：跟随系统 / 日间 / 夜间），由 theme.js 生成 */
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden}
+.seg button{border:0;border-left:1px solid var(--rule);background:transparent;color:var(--ink-2);font-size:14px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.seg button:first-child{border-left:0}
+.seg button:hover{color:var(--pen)}
+.seg button[aria-checked="true"]{background:var(--pen);color:var(--on-pen);font-weight:700}
+.theme-row{display:flex;align-items:center;gap:10px}
 
 @media(max-width:600px){
   .container{padding:30px 16px 48px}

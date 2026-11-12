@@ -9,8 +9,12 @@ const REVIEW_INTERVALS = [1, 2, 4, 7, 15, 30];       // 学完后第几天复习
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 // 存数据用的名字。千万不要改：改了以后，老用户以前记的内容就读不出来了
 const LS_KEY = 'ebbinghaus-pwa-v1';
+// 存“记录方式”设置用的名字（每天记几门、每门记几个）
+const LS_SETTINGS = 'ebbinghaus-settings-v1';
 // 记住“今天的摘要已经看过了”，只在这次打开期间有效（关掉标签页就忘）
 const SS_DISMISSED = 'ebbinghaus-summary-dismissed';
+const MAX_SUBJECTS = 8;      // 最多分几门
+const MAX_PER_SUBJECT = 20;  // 每门最多定几个
 
 function dateToKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function keyToDate(k) { const p = k.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
@@ -20,6 +24,7 @@ function startOfToday() { const t = new Date(); return new Date(t.getFullYear(),
 function daysBetween(a, b) { return Math.round((a - b) / 86400000); }
 function fmtDate(d) { return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
 function fmtShort(d) { return (d.getMonth() + 1) + '/' + d.getDate(); }
+function toLines(text) { return (text || '').split('\n').map(l => l.trim()).filter(Boolean); }
 
 // “记忆保持率”的示意公式：隔 days 天不复习，大约还记得多少（最低 20%）。
 // 和首页那张图用的是同一个公式，只是示意，不是对个人记忆的测量。
@@ -28,13 +33,18 @@ function retentionRate(days) { return 0.2 + 0.8 * Math.exp(-0.45 * days); }
 let state = {
   entries: {},        // 学习内容： { '2026-11-12': ['知识点A', '知识点B'] }
   completed: {},      // 完成记录： { '复习日期::学习日期::内容': true }
+  // 记录方式： subjects 是每天要记的几门，每门有名字和打算记的个数。
+  // 例： [ {name:'英语', count:5}, {name:'数学', count:3} ]。空数组 = 不分科目，随便写
+  settings: { subjects: [] },
   currentMonth: new Date().getMonth(),
   currentYear: new Date().getFullYear(),
   selectedDate: startOfToday(),
-  inputText: '',
-  dialog: null,       // 现在打开的弹窗：null / 'summary' 今日摘要 / 'overdue' 逾期清单 / 'data' 备份
+  inputText: '',      // 不分科目时，输入框里的字
+  subjectText: {},    // 分科目时，每一门输入框里的字： { 0:'...', 1:'...' }
+  dialog: null,       // 现在打开的弹窗：null / 'summary' 今日摘要 / 'overdue' 逾期清单 / 'settings' 设置
+  dialogFresh: false, // 弹窗是不是刚打开（刚打开时播放一次出现的动画）
   overdueShot: [],    // 打开弹窗那一刻的逾期清单（这样打了勾的条目不会马上从眼前消失）
-  dataMsg: ''         // 备份弹窗里显示的结果提示
+  dataMsg: ''         // 设置弹窗里，备份的结果提示
 };
 
 function loadState() {
@@ -46,12 +56,29 @@ function loadState() {
       state.completed = d.completed || {};
     }
   } catch (e) {}
+  try {
+    const raw = localStorage.getItem(LS_SETTINGS);
+    if (raw) state.settings.subjects = cleanSubjects(JSON.parse(raw).subjects);
+  } catch (e) {}
 }
 function saveState() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify({ entries: state.entries, completed: state.completed }));
   } catch (e) {}
 }
+function saveSettings() {
+  try { localStorage.setItem(LS_SETTINGS, JSON.stringify(state.settings)); } catch (e) {}
+}
+// 检查一遍科目设置，防止读到坏数据
+function cleanSubjects(list) {
+  if (!Array.isArray(list)) return [];
+  return list.slice(0, MAX_SUBJECTS).map(s => ({
+    name: typeof (s && s.name) === 'string' ? s.name.slice(0, 12) : '',
+    count: Math.min(MAX_PER_SUBJECT, Math.max(1, parseInt(s && s.count, 10) || 5))
+  }));
+}
+// 第 i 门的名字：没起名字就叫“第 N 门”
+function subjectName(i) { return (state.settings.subjects[i].name || '').trim() || '第 ' + (i + 1) + ' 门'; }
 
 // ========== 2) 计算 ==========
 function doneKey(dueKey, learnedOn, content) { return dueKey + '::' + learnedOn + '::' + content; }
@@ -109,6 +136,15 @@ function getCalDays(y, m) {
   return days;
 }
 
+// 某一天复习的情况：一共几项、完成几项、状态（'' 没有 / done 全部完成 / late 逾期 / due 待复习）
+function dayLoad(rMap, date, today) {
+  const dk = dateToKey(date);
+  const revs = rMap[dk] || [];
+  const done = revs.filter(r => isCompleted(dk, r.content, r.learnedOn)).length;
+  const st = !revs.length ? '' : done === revs.length ? 'done' : date < today ? 'late' : 'due';
+  return { total: revs.length, done, state: st };
+}
+
 // 按“哪天学的”分组
 function groupByLearned(list) {
   const groups = {};
@@ -129,13 +165,27 @@ function goToDate(d) {
   render();
 }
 
+// 输入框里现在有没有写东西
+function hasInput() {
+  if (state.settings.subjects.length === 0) return !!state.inputText.trim();
+  return state.settings.subjects.some((_, i) => (state.subjectText[i] || '').trim());
+}
+
+// 把输入框里的内容加到选中的那一天。
+// 分了科目时，每条前面自动加上“科目名：”，例如在“英语”那一门里写 abandon，存成“英语：abandon”
 function addEntries() {
-  const lines = state.inputText.split('\n').map(l => l.trim()).filter(Boolean);
+  const subjects = state.settings.subjects;
+  let lines = [];
+  if (subjects.length === 0) lines = toLines(state.inputText);
+  else subjects.forEach((_, i) => {
+    const name = subjectName(i);
+    toLines(state.subjectText[i]).forEach(l => lines.push(l.startsWith(name + '：') || l.startsWith(name + ':') ? l : name + '：' + l));
+  });
   if (!lines.length) return;
   const k = dateToKey(state.selectedDate);
   if (!state.entries[k]) state.entries[k] = [];
   lines.forEach(l => state.entries[k].push(l));
-  state.inputText = '';
+  state.inputText = ''; state.subjectText = {};
   saveState(); render();
 }
 
@@ -157,8 +207,22 @@ function deleteEntry(dayKey, idx) {
   });
 }
 
+// --- 记录方式：每天记几门、每门记几个 ---
+function setSubjectCount(n) {
+  const list = state.settings.subjects;
+  n = Math.min(MAX_SUBJECTS, Math.max(0, n));
+  while (list.length < n) list.push({ name: '', count: 5 });
+  while (list.length > n) list.pop();
+  saveSettings(); render();
+}
+function setSubjectTarget(i, n) {
+  state.settings.subjects[i].count = Math.min(MAX_PER_SUBJECT, Math.max(1, n));
+  saveSettings(); render();
+}
+
 function openDialog(name) {
   state.dialog = name;
+  state.dialogFresh = true;
   state.overdueShot = getOverdue(getReviewMap());
   state.dataMsg = '';
   render();
@@ -175,7 +239,7 @@ function closeDialog() {
 
 // --- 备份：导出成一个文件 / 从文件导入 ---
 function exportBackup() {
-  const data = { app: 'ebbinghaus-review', version: 1, exportedAt: new Date().toISOString(), entries: state.entries, completed: state.completed };
+  const data = { app: 'ebbinghaus-review', version: 1, exportedAt: new Date().toISOString(), entries: state.entries, completed: state.completed, settings: state.settings };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -208,11 +272,16 @@ function importBackup(file) {
         Object.keys(d.completed).forEach(k => { if (d.completed[k] && !state.completed[k]) { state.completed[k] = true; ticks++; } });
       }
       saveState();
+      // 记录方式：这台设备还没设过，才用备份里的
+      if (state.settings.subjects.length === 0 && d.settings) {
+        state.settings.subjects = cleanSubjects(d.settings.subjects);
+        saveSettings();
+      }
       state.dataMsg = added || ticks
         ? '导入完成：新增 ' + added + ' 项学习内容、' + ticks + ' 条完成记录。'
         : '这份备份里的内容，这台设备上已经都有了。';
     } catch (e) {
-      state.dataMsg = '这个文件读不出来。请选择从本站“导出备份”得到的 .json 文件。';
+      state.dataMsg = '这个文件读不出来。请选择从本站“导出”得到的 .json 文件。';
     }
     render();
   };
@@ -258,12 +327,20 @@ function h(tag, attrs, ...children) {
 
 // 小图标（SVG 线条）
 const ICONS = {
-  left: 'M15 5l-7 7 7 7', right: 'M9 5l7 7-7 7', close: 'M6 6l12 12M18 6L6 18'
+  left: 'M15 5l-7 7 7 7', right: 'M9 5l7 7-7 7', close: 'M6 6l12 12M18 6L6 18', minus: 'M6 12h12', plus: 'M6 12h12M12 6v12'
 };
 function icon(name) {
   const s = h('span', { className: 'icon', 'aria-hidden': 'true' });
   s.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="' + ICONS[name] + '"/></svg>';
   return s;
+}
+
+// 加减按钮： [−] 3 [+]
+function stepper(value, min, max, onChange, label, fk) {
+  return h('span', { className: 'stepper', role: 'group', 'aria-label': label },
+    h('button', { type: 'button', 'aria-label': label + '减 1', disabled: value <= min, 'data-fk': fk + '-', onclick: () => onChange(value - 1) }, icon('minus')),
+    h('b', { 'aria-live': 'polite' }, value),
+    h('button', { type: 'button', 'aria-label': label + '加 1', disabled: value >= max, 'data-fk': fk + '+', onclick: () => onChange(value + 1) }, icon('plus')));
 }
 
 // 一条可以打勾的复习内容。整行都能点。scope 用来区分“页面里的”和“弹窗里的”同一条
@@ -307,21 +384,27 @@ function render() {
   const todayDone = todayRevs.filter(r => isCompleted(todayKey, r.content, r.learnedOn)).length;
   const totalLearned = Object.values(state.entries).reduce((s, a) => s + a.length, 0);
   const totalDone = Object.keys(rMap).reduce((s, dk) => s + rMap[dk].filter(r => isCompleted(dk, r.content, r.learnedOn)).length, 0);
+  const diff = daysBetween(state.selectedDate, today);
+  const rel = diff === 0 ? '今天' : diff === 1 ? '明天' : diff === -1 ? '昨天' : diff > 0 ? diff + ' 天后' : (-diff) + ' 天前';
+  // 小标签：现在选中的是哪一天
+  const dayTag = () => h('span', { className: 'tag' + (diff === 0 ? ' now' : '') }, diff === 0 ? '今天' : fmtDate(state.selectedDate) + '，' + rel);
 
   // 重画之前，先记下：页面滚到哪了、键盘焦点在哪个元素上，画完再恢复
   const app = document.getElementById('app');
   const scrollY = window.scrollY;
   const scrolls = {};
   app.querySelectorAll('[data-sk]').forEach(el => { scrolls[el.dataset.sk] = el.scrollTop; });
-  const focusKey = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.fk : null;
-  const caret = focusKey === 'input' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+  const active = document.activeElement;
+  const focusKey = active && active.dataset ? active.dataset.fk : null;
+  let caret = null;
+  try { if (focusKey && typeof active.selectionStart === 'number') caret = [active.selectionStart, active.selectionEnd]; } catch (e) {}
 
   app.innerHTML = '';
 
-  // ---------- 顶部：今天的情况 ----------
+  // ---------- 顶部一行：今天的情况 ----------
   const todayLeft = todayRevs.length - todayDone;
   let line;
-  if (todayRevs.length === 0) line = totalLearned === 0 ? '还没有记录。在下面写下今天学的内容，复习日程会自动排好。' : '今天没有要复习的内容。';
+  if (todayRevs.length === 0) line = totalLearned === 0 ? '还没有记录。写下今天学的内容，复习日程会自动排好。' : '今天没有要复习的内容。';
   else if (todayLeft === 0) line = '今天的 ' + todayRevs.length + ' 项都复习完了。';
   else line = '今天要复习 ' + todayRevs.length + ' 项，已完成 ' + todayDone + ' 项。';
 
@@ -329,23 +412,25 @@ function render() {
     h('div', { className: 'strip-inner' },
       h('div', { className: 'strip-main' },
         h('h1', null, fmtDate(today), h('small', null, '周' + WEEKDAYS[today.getDay()])),
-        h('p', { className: 'strip-line' }, line),
-        todayRevs.length > 0 ? h('div', { className: 'progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(todayRevs.length), 'aria-valuenow': String(todayDone), 'aria-label': '今日复习进度' },
-          h('div', { className: 'progress-fill' + (todayLeft === 0 ? ' full' : ''), style: { width: (todayDone / todayRevs.length * 100) + '%' } })) : null
+        h('p', { className: 'strip-line' }, line)
       ),
       h('div', { className: 'strip-side' },
         streak > 0 ? h('span', { className: 'streak', title: '某一天的复习全部完成才算数' }, '连续 ', h('b', null, streak), ' 天') : null,
         overdue.length > 0 ? h('button', { type: 'button', className: 'chip late', 'data-fk': 'open-overdue', onclick: () => openDialog('overdue') }, '逾期 ' + overdue.length + ' 项') : null,
         h('button', { type: 'button', className: 'chip', 'data-fk': 'open-summary', onclick: () => openDialog('summary') }, '今日摘要'),
-        h('button', { type: 'button', className: 'chip', 'data-fk': 'open-data', onclick: () => openDialog('data') }, '备份')
+        h('button', { type: 'button', className: 'chip', 'data-fk': 'open-settings', onclick: () => openDialog('settings') }, '设置')
       )
-    )
+    ),
+    // 今日复习进度：贴在这一栏最下面的一条细线
+    todayRevs.length > 0 ? h('div', { className: 'progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(todayRevs.length), 'aria-valuenow': String(todayDone), 'aria-label': '今日复习进度' },
+      h('div', { className: 'progress-fill' + (todayLeft === 0 ? ' full' : ''), style: { width: (todayDone / todayRevs.length * 100) + '%' } })) : null
   ));
 
-  // ---------- 主体：左边日历，右边选中那天的内容 ----------
-  const side = h('aside', { className: 'side' });
-  const day = h('section', { className: 'day' });
-  app.appendChild(h('div', { className: 'workspace' }, side, day));
+  // ---------- 主体 ----------
+  // 第一排三块一样高：日历 | 记录 | 复习强度图。第二排两块：需要复习 | 这一天学的
+  const row1 = h('div', { className: 'row1' });
+  const row2 = h('div', { className: 'row2' });
+  app.appendChild(h('div', { className: 'workspace' }, row1, row2));
 
   // ----- 日历 -----
   const cal = h('div', { className: 'sheet cal' });
@@ -365,16 +450,13 @@ function render() {
   getCalDays(state.currentYear, state.currentMonth).forEach(d => {
     const dk = dateToKey(d.date);
     const learned = (state.entries[dk] || []).length;
-    const revs = rMap[dk] || [];
-    const done = revs.filter(r => isCompleted(dk, r.content, r.learnedOn)).length;
+    const load = dayLoad(rMap, d.date, today);
     const isSel = sameDay(d.date, state.selectedDate);
     const isTd = sameDay(d.date, today);
-    // 复习圆点的状态：全部完成=绿，日子过了没做完=红，其余=黄
-    const revState = !revs.length ? '' : done === revs.length ? 'done' : d.date < today ? 'late' : 'due';
 
     let label = fmtDate(d.date) + (isTd ? '，今天' : '');
     if (learned) label += '，学了 ' + learned + ' 项';
-    if (revs.length) label += '，复习 ' + done + '/' + revs.length + (revState === 'late' ? '，逾期' : '');
+    if (load.total) label += '，复习 ' + load.done + '/' + load.total + (load.state === 'late' ? '，逾期' : '');
 
     grid.appendChild(h('button', {
       type: 'button',
@@ -385,7 +467,7 @@ function render() {
       h('span', { className: 'cal-num' }, d.date.getDate()),
       h('span', { className: 'cal-dots' },
         learned ? h('i', { className: 'dot learned' }) : null,
-        revState ? h('i', { className: 'dot ' + revState }) : null)
+        load.state ? h('i', { className: 'dot ' + load.state }) : null)
     ));
   });
   cal.appendChild(grid);
@@ -395,86 +477,57 @@ function render() {
     h('span', null, h('i', { className: 'dot done' }), '已完成'),
     h('span', null, h('i', { className: 'dot late' }), '逾期')
   ));
-  side.appendChild(cal);
+  row1.appendChild(cal);
 
-  // ----- 累计 -----
-  side.appendChild(h('div', { className: 'sheet totals' },
-    h('div', null, h('b', null, totalLearned), h('span', null, '已学内容')),
-    h('div', null, h('b', null, Object.keys(state.entries).length), h('span', null, '学习天数')),
-    h('div', null, h('b', null, totalDone), h('span', null, '完成复习'))
-  ));
+  // ----- 记录 -----
+  row1.appendChild(recordPanel(dayLearned, diff, dayTag));
 
-  // ----- 记忆曲线小图 -----
-  side.appendChild(curveCard());
-
-  // ----- 右边：选中的这一天 -----
-  const diff = daysBetween(state.selectedDate, today);
-  const rel = diff === 0 ? '今天' : diff === 1 ? '明天' : diff === -1 ? '昨天' : diff > 0 ? diff + ' 天后' : (-diff) + ' 天前';
-  day.appendChild(h('header', { className: 'day-head' },
-    h('h2', null, fmtDate(state.selectedDate), h('small', null, '周' + WEEKDAYS[state.selectedDate.getDay()])),
-    h('span', { className: 'tag' + (diff === 0 ? ' now' : '') }, rel),
-    diff !== 0 ? h('button', { type: 'button', className: 'link-btn', 'data-fk': 'back-today', onclick: () => goToDate(today) }, '回到今天') : null
-  ));
-
-  // 需要复习
-  if (dayReviews.length > 0) {
-    const doneCount = dayReviews.filter(r => isCompleted(selKey, r.content, r.learnedOn)).length;
-    const sec = h('div', { className: 'sheet block' },
+  // ----- 复习强度图（外壳先放好，等整个界面放进页面、量得出宽高之后再画线）-----
+  row1.appendChild(h('div', { className: 'sheet load' },
+    h('div', { className: 'fill' },
       h('div', { className: 'block-head' },
-        h('h3', null, '需要复习'),
-        h('span', { className: 'count' }, '已完成 ' + doneCount + ' / ' + dayReviews.length))
-    );
-    if (diff < 0 && doneCount < dayReviews.length) {
-      sec.appendChild(h('p', { className: 'block-note late' }, '这一天已经过去了。补上之后照常打勾就行。'));
-    }
-    groupByLearned(dayReviews).forEach(g => {
-      sec.appendChild(groupHead(g));
-      g.items.forEach(r => sec.appendChild(checkRow('day', selKey, r)));
-    });
-    day.appendChild(sec);
-  }
+        h('h3', null, '复习强度'),
+        h('span', { className: 'count' }, (state.currentMonth + 1) + '月每天要复习几项')),
+      h('div', { className: 'load-plot', id: 'load-plot' }),
+      h('p', { className: 'load-note' }, '圆点颜色和日历一样。点图上的某一天，可以选中它。')
+    )));
 
-  // 记录学习内容
-  const addBtn = h('button', { type: 'button', className: 'btn add-btn', 'data-fk': 'add', disabled: !state.inputText.trim(), onclick: addEntries }, '添加到 ' + fmtDate(state.selectedDate));
-  const ta = h('textarea', {
-    id: 'learn-input', rows: '3', 'data-fk': 'input',
-    placeholder: '每行写一个知识点，例如：\n英语单词：abandon, abolish\n数学：导数的基本公式',
-    oninput: e => { state.inputText = e.target.value; addBtn.disabled = !state.inputText.trim(); },
-    onkeydown: e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addEntries(); } }
+  // ----- 需要复习 -----
+  const doneCount = dayReviews.filter(r => isCompleted(selKey, r.content, r.learnedOn)).length;
+  const revList = h('div', { className: 'scroll', 'data-sk': 'reviews' });
+  if (dayReviews.length === 0) revList.appendChild(h('p', { className: 'empty' }, '这一天没有要复习的内容。'));
+  if (diff < 0 && doneCount < dayReviews.length) revList.appendChild(h('p', { className: 'block-note late' }, '这一天已经过去了。补上之后照常打勾就行。'));
+  groupByLearned(dayReviews).forEach(g => {
+    revList.appendChild(groupHead(g));
+    g.items.forEach(r => revList.appendChild(checkRow('day', selKey, r)));
   });
-  ta.value = state.inputText;
-  day.appendChild(h('div', { className: 'sheet block' },
+  row2.appendChild(h('div', { className: 'sheet block reviews' },
     h('div', { className: 'block-head' },
-      h('h3', null, h('label', { for: 'learn-input' }, diff === 0 ? '记下今天学的' : '记下这一天学的')),
-      h('span', { className: 'count' }, '每行一个知识点')),
-    ta,
-    h('div', { className: 'add-row' }, addBtn, h('span', { className: 'kbd-hint' }, '也可以按 Ctrl + Enter'))
-  ));
+      h('h3', null, '需要复习', dayTag()),
+      h('span', { className: 'count' }, dayReviews.length ? '已完成 ' + doneCount + ' / ' + dayReviews.length : '')),
+    revList));
 
-  // 这一天学的
-  if (dayLearned.length > 0) {
-    const sec = h('div', { className: 'sheet block' },
-      h('div', { className: 'block-head' },
-        h('h3', null, diff === 0 ? '今天学的' : '这一天学的'),
-        h('span', { className: 'count' }, dayLearned.length + ' 项'))
-    );
-    dayLearned.forEach((item, idx) => {
-      // 六个小圆点：这条内容的六次复习各自的进度
-      const pips = REVIEW_INTERVALS.map((interval, i) => {
-        const rd = addDays(state.selectedDate, interval);
-        const st = isCompleted(dateToKey(rd), item, selKey) ? 'done' : rd < today ? 'late' : sameDay(rd, today) ? 'due' : 'todo';
-        return h('i', { className: 'pip ' + st });
-      });
-      const doneN = REVIEW_INTERVALS.filter(n => isCompleted(dateToKey(addDays(state.selectedDate, n)), item, selKey)).length;
-      sec.appendChild(h('div', { className: 'item learn-item' },
-        h('span', { className: 'item-text' }, item),
-        h('span', { className: 'pips', role: 'img', 'aria-label': '六次复习已完成 ' + doneN + ' 次', title: '六次复习已完成 ' + doneN + ' 次' }, pips),
-        h('button', { type: 'button', className: 'del-btn', 'aria-label': '删除：' + item, 'data-fk': 'del:' + idx, onclick: () => deleteEntry(selKey, idx) }, icon('close'))
-      ));
+  // ----- 这一天学的 -----
+  const learnList = h('div', { className: 'scroll', 'data-sk': 'learned' });
+  if (dayLearned.length === 0) learnList.appendChild(h('p', { className: 'empty' }, '这一天还没有记内容。写在上面的输入框里，六次复习会自动排进日历。'));
+  dayLearned.forEach((item, idx) => {
+    // 六个小圆点：这条内容的六次复习各自的进度
+    const pips = REVIEW_INTERVALS.map(interval => {
+      const rd = addDays(state.selectedDate, interval);
+      const st = isCompleted(dateToKey(rd), item, selKey) ? 'done' : rd < today ? 'late' : sameDay(rd, today) ? 'due' : 'todo';
+      return h('i', { className: 'pip ' + st });
     });
+    const doneN = REVIEW_INTERVALS.filter(n => isCompleted(dateToKey(addDays(state.selectedDate, n)), item, selKey)).length;
+    learnList.appendChild(h('div', { className: 'item learn-item' },
+      h('span', { className: 'item-text' }, item),
+      h('span', { className: 'pips', role: 'img', 'aria-label': '六次复习已完成 ' + doneN + ' 次', title: '六次复习已完成 ' + doneN + ' 次' }, pips),
+      h('button', { type: 'button', className: 'del-btn', 'aria-label': '删除：' + item, 'data-fk': 'del:' + idx, onclick: () => deleteEntry(selKey, idx) }, icon('close'))
+    ));
+  });
+  if (dayLearned.length > 0) {
     // 复习安排：点日期可以直接跳过去
-    sec.appendChild(h('p', { className: 'plan-label' }, '这些内容的复习日（点一下可以跳过去）：'));
-    sec.appendChild(h('div', { className: 'plan' }, REVIEW_INTERVALS.map((interval, i) => {
+    learnList.appendChild(h('p', { className: 'plan-label' }, '这些内容的复习日（点一下可以跳过去）：'));
+    learnList.appendChild(h('div', { className: 'plan' }, REVIEW_INTERVALS.map((interval, i) => {
       const rd = addDays(state.selectedDate, interval);
       const rk = dateToKey(rd);
       const mine = (rMap[rk] || []).filter(r => r.learnedOn === selKey);
@@ -483,54 +536,154 @@ function render() {
       return h('button', { type: 'button', className: 'plan-chip ' + st, 'data-fk': 'plan:' + i, onclick: () => goToDate(rd) },
         h('b', null, fmtShort(rd)), h('span', null, '第 ' + (i + 1) + ' 次'));
     })));
-    day.appendChild(sec);
   }
-
-  // 这一天什么都没有
-  if (dayLearned.length === 0 && dayReviews.length === 0) {
-    day.appendChild(h('p', { className: 'empty' }, '这一天还没有学习或复习内容。在上面写下学到的东西，六次复习会自动排进日历。'));
-  }
+  row2.appendChild(h('div', { className: 'sheet block learned' },
+    h('div', { className: 'block-head' },
+      h('h3', null, diff === 0 ? '今天学的' : '这一天学的', diff === 0 ? null : dayTag()),
+      h('span', { className: 'count' }, dayLearned.length ? dayLearned.length + ' 项' : '')),
+    learnList));
 
   // ---------- 弹窗 ----------
   if (state.dialog) app.appendChild(dialogNode({ today, todayKey, todayRevs, todayDone, streak, totalLearned, totalDone }));
+
+  // 界面已经在页面里了，现在量得出大小，可以画复习强度图
+  drawLoadChart(rMap, today);
 
   // 恢复滚动位置和键盘焦点
   window.scrollTo(0, scrollY);
   app.querySelectorAll('[data-sk]').forEach(el => { if (scrolls[el.dataset.sk]) el.scrollTop = scrolls[el.dataset.sk]; });
   if (focusKey) {
     const el = app.querySelector('[data-fk="' + (window.CSS && CSS.escape ? CSS.escape(focusKey) : focusKey) + '"]');
-    if (el) { el.focus({ preventScroll: true }); if (caret && el.setSelectionRange) el.setSelectionRange(caret[0], caret[1]); }
+    if (el && !el.disabled) {
+      el.focus({ preventScroll: true });
+      try { if (caret && el.setSelectionRange) el.setSelectionRange(caret[0], caret[1]); } catch (e) {}
+    }
   }
 }
 
-// 左下角的记忆曲线小图（和首页是同一个公式）
-function curveCard() {
-  const W = 320, H = 132, left = 8, right = 8, top = 12, bottom = 26, LAST = 32;
-  const x = d => left + (W - left - right) * d / LAST;
-  const y = r => top + (H - top - bottom) * (1 - r);
-  const keep = (d, k) => 0.2 + 0.8 * Math.exp(-k * d);
+// 记录面板。不分科目时是一个大输入框；分了科目时，每一门一个输入框，横线的行数就是打算记的个数
+function recordPanel(dayLearned, diff, dayTag) {
+  const subjects = state.settings.subjects;
+  const addBtn = h('button', { type: 'button', className: 'btn add-btn', 'data-fk': 'add', disabled: !hasInput(), onclick: addEntries }, '添加到 ' + fmtDate(state.selectedDate));
+  const onKey = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addEntries(); } };
+  const body = h('div', { className: 'record-body', 'data-sk': 'record' });
+  let headNote;
+
+  if (subjects.length === 0) {
+    // --- 不分科目：一个大输入框，占满整块 ---
+    headNote = h('span', { className: 'count' }, '每行一个知识点');
+    const ta = h('textarea', {
+      id: 'learn-input', className: 'big', 'data-fk': 'input', 'aria-label': '学习内容，每行一个知识点',
+      placeholder: '每行写一个知识点，例如：\n英语单词：abandon, abolish\n数学：导数的基本公式',
+      oninput: e => { state.inputText = e.target.value; addBtn.disabled = !hasInput(); },
+      onkeydown: onKey
+    });
+    ta.value = state.inputText;
+    body.appendChild(ta);
+  } else {
+    // --- 分科目：每一门一个输入框 ---
+    const total = subjects.reduce((s, x) => s + x.count, 0);
+    headNote = h('span', { className: 'count' });
+    const counters = [];
+    const refresh = () => {
+      let sum = 0;
+      subjects.forEach((s, i) => {
+        const n = counters[i].saved + toLines(state.subjectText[i]).length;
+        sum += n;
+        counters[i].el.textContent = n + ' / ' + s.count;
+        counters[i].el.classList.toggle('met', n >= s.count);
+      });
+      headNote.textContent = '共 ' + sum + ' / ' + total;
+      addBtn.disabled = !hasInput();
+    };
+    subjects.forEach((s, i) => {
+      const name = subjectName(i);
+      // 这一天已经存下来的、属于这一门的条数（以“科目名：”开头的）
+      const saved = dayLearned.filter(t => t.startsWith(name + '：') || t.startsWith(name + ':')).length;
+      const counter = h('span', { className: 'subject-count', title: '已经记下的 + 正在写的 / 打算记的' });
+      counters.push({ el: counter, saved });
+      const ta = h('textarea', {
+        id: 'subject-' + i, 'data-fk': 'subject:' + i, rows: String(s.count),
+        placeholder: '每行一个，共 ' + s.count + ' 个',
+        oninput: e => { state.subjectText[i] = e.target.value; refresh(); },
+        onkeydown: onKey
+      });
+      ta.value = state.subjectText[i] || '';
+      body.appendChild(h('div', { className: 'subject' },
+        h('div', { className: 'subject-head' }, h('label', { for: 'subject-' + i }, name), counter),
+        ta));
+    });
+    refresh();
+  }
+
+  return h('div', { className: 'sheet record' },
+    h('div', { className: 'fill' },
+      h('div', { className: 'block-head' },
+        h('h3', null, diff === 0 ? '记下今天学的' : '记到', diff === 0 ? null : dayTag()),
+        headNote),
+      body,
+      h('div', { className: 'add-row' },
+        addBtn,
+        h('span', { className: 'kbd-hint' }, 'Ctrl + Enter'),
+        h('button', { type: 'button', className: 'link-btn', 'data-fk': 'customize', onclick: () => openDialog('settings') }, subjects.length ? '改科目和数量' : '按科目记'))
+    ));
+}
+
+// 复习强度图：横轴是日历上这个月的每一天，纵轴是那天要复习几项，用折线连起来
+function drawLoadChart(rMap, today) {
+  const box = document.getElementById('load-plot');
+  if (!box) return;
+  const W = box.clientWidth, H = box.clientHeight;
+  if (W < 80 || H < 80) return;
+  const y0 = state.currentYear, m0 = state.currentMonth;
+  const nDays = new Date(y0, m0 + 1, 0).getDate();
+  const days = [];
+  for (let d = 1; d <= nDays; d++) { const date = new Date(y0, m0, d); days.push({ d, date, ...dayLoad(rMap, date, today) }); }
+
+  // 纵轴：最高刻度取一个整齐的数（至少到 4）
+  const peak = Math.max(4, ...days.map(x => x.total));
+  const stepY = peak <= 4 ? 1 : peak <= 8 ? 2 : peak <= 20 ? 5 : peak <= 40 ? 10 : Math.ceil(peak / 40) * 10;
+  const top = Math.ceil(peak / stepY) * stepY;
+
+  const left = 30, right = 10, padTop = 12, bottom = 26;
+  const colW = (W - left - right) / nDays;                       // 每一天占的宽度
+  const x = d => left + colW * (d - 0.5);
+  const y = v => padTop + (H - padTop - bottom) * (1 - v / top);
   const f = n => n.toFixed(1);
-  let fading = '';
-  for (let d = 0; d <= LAST; d += 0.25) fading += (d ? 'L' : 'M') + f(x(d)) + ',' + f(y(keep(d, 0.45)));
-  let saw = 'M' + f(x(0)) + ',' + f(y(1)); let from = 0, k = 0.45;
-  REVIEW_INTERVALS.concat(LAST).forEach((to, i) => {
-    for (let d = from + 0.25; d <= to; d += 0.25) saw += 'L' + f(x(d)) + ',' + f(y(keep(d - from, k)));
-    if (i < REVIEW_INTERVALS.length) saw += 'L' + f(x(to)) + ',' + f(y(1));
-    from = to; k *= 0.55;
+
+  let svg = '';
+  for (let v = 0; v <= top; v += stepY) {
+    svg += '<line class="l-grid" x1="' + left + '" x2="' + (W - right) + '" y1="' + f(y(v)) + '" y2="' + f(y(v)) + '"/>' +
+           '<text class="l-ylab" x="' + (left - 7) + '" y="' + f(y(v) + 4) + '" text-anchor="end">' + v + '</text>';
+  }
+  // 今天：一道荧光笔；选中的那一天：一条蓝色竖线
+  if (today.getFullYear() === y0 && today.getMonth() === m0) {
+    svg += '<rect class="l-today" x="' + f(x(today.getDate()) - colW / 2) + '" y="' + padTop + '" width="' + f(colW) + '" height="' + f(H - padTop - bottom) + '"/>';
+  }
+  const sel = state.selectedDate;
+  if (sel.getFullYear() === y0 && sel.getMonth() === m0) {
+    svg += '<line class="l-sel" x1="' + f(x(sel.getDate())) + '" x2="' + f(x(sel.getDate())) + '" y1="' + padTop + '" y2="' + f(y(0)) + '"/>';
+  }
+  // 折线和它下面的浅色
+  const pts = days.map(p => f(x(p.d)) + ',' + f(y(p.total)));
+  svg += '<path class="l-area" d="M' + f(x(1)) + ',' + f(y(0)) + 'L' + pts.join('L') + 'L' + f(x(nDays)) + ',' + f(y(0)) + 'Z"/>';
+  svg += '<path class="l-line" d="M' + pts.join('L') + '"/>';
+  // 有复习的日子画一个圆点，颜色和日历上的圆点一致
+  days.forEach(p => { if (p.total) svg += '<circle class="l-dot ' + p.state + '" cx="' + f(x(p.d)) + '" cy="' + f(y(p.total)) + '" r="3.6"/>'; });
+  // 横轴日期：1、5、10、15……
+  days.forEach(p => { if (p.d === 1 || p.d % 5 === 0) svg += '<text class="l-xlab" x="' + f(x(p.d)) + '" y="' + (H - 7) + '" text-anchor="middle">' + p.d + '</text>'; });
+  // 每一天一条看不见的竖条，用来接收点击
+  days.forEach(p => {
+    svg += '<rect class="l-hit" data-d="' + p.d + '" x="' + f(x(p.d) - colW / 2) + '" y="0" width="' + f(colW) + '" height="' + H + '">' +
+           '<title>' + fmtDate(p.date) + '：' + (p.total ? '要复习 ' + p.total + ' 项，已完成 ' + p.done + ' 项' : '没有要复习的') + '</title></rect>';
   });
-  const days = REVIEW_INTERVALS.map(d => '<text class="c-day" x="' + f(x(d)) + '" y="' + (H - 8) + '" text-anchor="middle">' + d + '</text>').join('');
-  const card = h('div', { className: 'sheet curve-card' });
-  card.innerHTML =
-    '<h3>为什么是这六天</h3>' +
-    '<p>每复习一次，就忘得更慢一点，所以间隔可以越拉越长。</p>' +
-    '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="示意图：不复习时记忆很快变淡；在第 1、2、4、7、15、30 天复习，记忆一直保持在高位。">' +
-    '<line class="c-grid" x1="' + left + '" x2="' + (W - right) + '" y1="' + f(y(0)) + '" y2="' + f(y(0)) + '"/>' +
-    '<path class="c-fading" d="' + fading + '"/>' +
-    '<path class="c-saw" d="' + saw + '"/>' + days +
-    '<text class="c-lab-saw" x="' + f(x(18)) + '" y="' + f(y(0.58)) + '">按时复习</text>' +
-    '<text class="c-lab-fading" x="' + f(x(18)) + '" y="' + f(y(0.28)) + '">不复习</text>' +
-    '</svg>';
-  return card;
+
+  const busiest = days.reduce((a, b) => (b.total > a.total ? b : a), days[0]);
+  const label = (m0 + 1) + '月复习强度折线图。' + (busiest.total ? '最多的一天是 ' + fmtDate(busiest.date) + '，要复习 ' + busiest.total + ' 项。' : '这个月没有要复习的内容。');
+  box.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + label + '">' + svg + '</svg>';
+  box.querySelectorAll('.l-hit').forEach(r => r.addEventListener('click', () => {
+    state.selectedDate = new Date(y0, m0, Number(r.dataset.d)); render();
+  }));
 }
 
 // 三种弹窗共用一个外壳
@@ -551,6 +704,7 @@ function dialogNode(ctx) {
       h('div', { className: 'done' }, h('b', null, ctx.todayDone), h('span', null, '已完成')),
       h('div', { className: stillLate ? 'late' : 'done' }, h('b', null, stillLate), h('span', null, '逾期未复习'))
     ));
+    body.push(h('p', { className: 'dialog-text' }, '累计：已学 ' + ctx.totalLearned + ' 项内容，学了 ' + Object.keys(state.entries).length + ' 天，完成复习 ' + ctx.totalDone + ' 次。'));
     if (ctx.todayRevs.length > 0) {
       body.push(h('h3', null, '今天的清单'));
       groupByLearned(ctx.todayRevs).forEach(g => {
@@ -585,22 +739,50 @@ function dialogNode(ctx) {
     foot = h('button', { type: 'button', className: 'btn', onclick: closeDialog }, '完成');
   }
 
-  if (state.dialog === 'data') {
-    title = '备份';
-    sub = '记录只存在这台设备的这个浏览器里';
+  if (state.dialog === 'settings') {
+    title = '设置';
+    sub = '改完马上生效，只保存在这台设备的这个浏览器里';
+    const subjects = state.settings.subjects;
+
+    // --- 界面颜色 ---
+    body.push(h('h3', null, '界面颜色'));
+    const themeSpot = h('span');
+    if (window.SiteTheme) SiteTheme.mount(themeSpot, () => render());      // 三个按钮由 theme.js 生成；换色后重画一遍
+    body.push(h('div', { className: 'set-row' }, h('div', null, h('p', null, '“跟随系统”会在手机或电脑开深色模式时自动变成夜间。')), themeSpot));
+
+    // --- 记录方式 ---
+    body.push(h('h3', null, '记录方式'));
+    body.push(h('div', { className: 'set-row' },
+      h('div', null, h('strong', null, '每天记几门'), h('p', null, subjects.length ? '每一门有自己的输入框，内容前面会自动加上科目名。' : '现在是 0 门：不分科目，一个大输入框随便写。')),
+      stepper(subjects.length, 0, MAX_SUBJECTS, setSubjectCount, '每天记几门', 'subjects')));
+    subjects.forEach((s, i) => {
+      body.push(h('div', { className: 'set-row subject-row' },
+        h('input', {
+          type: 'text', maxlength: '12', value: s.name, placeholder: '第 ' + (i + 1) + ' 门的名字，比如' + (['英语', '数学', '专业课'][i % 3]),
+          'aria-label': '第 ' + (i + 1) + ' 门的名字', 'data-fk': 'subject-name:' + i,
+          // 打字时只保存，不重画（重画会打断输入）。关掉弹窗时界面会重画，新名字那时就用上了
+          oninput: e => { s.name = e.target.value; saveSettings(); }
+        }),
+        h('span', { className: 'set-label' }, '记几个'),
+        stepper(s.count, 1, MAX_PER_SUBJECT, n => setSubjectTarget(i, n), subjectName(i) + '每天记几个', 'target:' + i)));
+    });
+
+    // --- 备份 ---
+    body.push(h('h3', null, '备份'));
     const fileInput = h('input', { type: 'file', accept: '.json,application/json', className: 'file-input', onchange: e => { if (e.target.files[0]) importBackup(e.target.files[0]); } });
-    body.push(h('p', { className: 'dialog-text' }, '现在这里有 ' + ctx.totalLearned + ' 项学习内容、' + ctx.totalDone + ' 条完成记录。清除浏览器数据或换设备之前，先导出一份备份。'));
-    body.push(h('div', { className: 'data-row' },
-      h('div', null, h('h3', null, '导出备份'), h('p', null, '把全部记录存成一个文件，下载到这台设备。')),
+    body.push(h('p', { className: 'dialog-text' }, '现在这里有 ' + ctx.totalLearned + ' 项学习内容、' + ctx.totalDone + ' 条完成记录。清除浏览器数据或换设备之前，先导出一份。'));
+    body.push(h('div', { className: 'set-row' },
+      h('div', null, h('strong', null, '导出备份'), h('p', null, '把全部记录存成一个文件，下载到这台设备。')),
       h('button', { type: 'button', className: 'btn', 'data-fk': 'export', disabled: ctx.totalLearned === 0, onclick: exportBackup }, '导出')));
-    body.push(h('div', { className: 'data-row' },
-      h('div', null, h('h3', null, '导入备份'), h('p', null, '从备份文件里把记录加回来。只会添加，不会删掉这里已有的内容。')),
+    body.push(h('div', { className: 'set-row' },
+      h('div', null, h('strong', null, '导入备份'), h('p', null, '从备份文件里把记录加回来。只会添加，不会删掉这里已有的内容。')),
       h('button', { type: 'button', className: 'btn ghost', 'data-fk': 'import', onclick: () => fileInput.click() }, '选择文件'),
       fileInput));
     if (state.dataMsg) body.push(h('p', { className: 'data-msg', role: 'status' }, state.dataMsg));
   }
 
-  return h('div', { className: 'overlay', onclick: closeDialog },
+  const fresh = state.dialogFresh; state.dialogFresh = false;
+  return h('div', { className: 'overlay' + (fresh ? ' fresh' : ''), onclick: closeDialog },
     h('div', { className: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dialog-title', onclick: e => e.stopPropagation() },
       h('header', { className: 'dialog-head' },
         h('div', null, h('h2', { id: 'dialog-title' }, title), sub ? h('p', null, sub) : null),
@@ -616,6 +798,13 @@ loadState();
 
 // 按 Esc 关闭弹窗
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.dialog) closeDialog(); });
+
+// 窗口宽度变了（比如手机横过来），复习强度图要按新的大小重画
+let lastWidth = window.innerWidth, resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (window.innerWidth !== lastWidth) { lastWidth = window.innerWidth; render(); } }, 150);
+});
 
 // 打开时：今天有要复习的或有逾期的，而且这次打开还没看过摘要，就自动弹出今日摘要
 (function start() {
